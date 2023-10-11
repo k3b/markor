@@ -165,6 +165,13 @@
                 android:key="@string/pref_key__share_into_format"
                 android:title="@string/share_into_format" />
 
+            <androidx.preference.EditTextPreference
+                android:defaultValue="_res"
+                android:dialogMessage="@string/attachment_folder_name_desc"
+                android:icon="@drawable/ic_attach_file_black_24dp"
+                android:key="@string/pref_key__attachment_folder_name"
+                android:title="@string/attachment_folder_name" />
+
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:icon="@drawable/ic_open_in_browser_black_24dp"
@@ -598,6 +605,32 @@
                 <Preference
                     android:icon="@drawable/ic_reorder_black_24dp"
                     android:key="@string/pref_key__asciidoc__reorder_actions"
+                    android:title="@string/action_order" />
+            </PreferenceCategory>
+
+        </PreferenceScreen>
+        <!-- OrgMode Screen -->
+        <PreferenceScreen
+            android:icon="@drawable/fountain_pen"
+            android:title="@string/orgmode">
+
+            <PreferenceCategory android:title="@string/syntax_highlighting">
+                <androidx.preference.SeekBarPreference
+                    android:defaultValue="650"
+                    android:icon="@drawable/ic_highlight_black_24dp"
+                    android:key="@string/pref_key__orgmode__hl_delay"
+                    android:max="3000"
+                    android:summary="@string/highlighting_delay_lower_value_more_battery_drain_description__appspecific"
+                    android:title="@string/highlighting_delay"
+                    app:min="50"
+                    app:showSeekBarValue="true" />
+
+            </PreferenceCategory>
+
+            <PreferenceCategory android:title="@string/actionbutton">
+                <Preference
+                    android:icon="@drawable/ic_reorder_black_24dp"
+                    android:key="@string/pref_key__orgmode__reorder_actions"
                     android:title="@string/action_order" />
             </PreferenceCategory>
 

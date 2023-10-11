@@ -16,12 +16,14 @@ import android.util.Pair;
 
 import androidx.annotation.ColorRes;
 import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 
 import net.gsantner.markor.BuildConfig;
 import net.gsantner.markor.R;
 import net.gsantner.markor.format.FormatRegistry;
+import net.gsantner.markor.frontend.textview.TextViewUtils;
 import net.gsantner.markor.util.MarkorContextUtils;
 import net.gsantner.markor.util.ShortcutUtils;
 import net.gsantner.opoc.format.GsTextUtils;
@@ -149,6 +151,10 @@ public class AppSettings extends GsSharedPreferencesPropertyBackend {
 
     public int getAsciidocHighlightingDelay() {
         return getInt(R.string.pref_key__asciidoc__hl_delay, 650);
+    }
+
+    public int getOrgmodeHighlightingDelay() {
+        return getInt(R.string.pref_key__orgmode__hl_delay, 650);
     }
 
     public boolean isMarkdownHighlightLineEnding() {
@@ -921,5 +927,14 @@ public class AppSettings extends GsSharedPreferencesPropertyBackend {
 
     public String getShareIntoPrefix() {
         return getString(R.string.pref_key__share_into_format, "\\n----\\n{{text}}");
+    }
+
+    public @NonNull File getAttachmentFolder(final File file) {
+        final File parent = file.getParentFile();
+        if (parent == null) {
+            return getNotebookDirectory();
+        }
+        final String child = getString(R.string.pref_key__attachment_folder_name, "_res").trim();
+        return TextViewUtils.isNullOrEmpty(child) ? parent : new File(parent, child);
     }
 }
