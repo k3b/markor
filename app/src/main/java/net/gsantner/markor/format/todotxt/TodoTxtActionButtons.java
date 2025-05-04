@@ -1,6 +1,6 @@
 /*#######################################################
  *
- *   Maintained 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -8,7 +8,6 @@
 package net.gsantner.markor.format.todotxt;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -26,7 +25,6 @@ import net.gsantner.markor.frontend.MarkorDialogFactory;
 import net.gsantner.markor.frontend.textview.TextViewUtils;
 import net.gsantner.markor.model.Document;
 import net.gsantner.opoc.util.GsCollectionUtils;
-import net.gsantner.opoc.util.GsContextUtils;
 import net.gsantner.opoc.util.GsFileUtils;
 import net.gsantner.opoc.wrapper.GsCallback;
 
@@ -52,30 +50,19 @@ public class TodoTxtActionButtons extends ActionButtonBase {
     }
 
     @Override
-    public List<ActionItem> getActiveActionList() {
-
-        final ActionItem[] TMA_ACTIONS = {
+    public List<ActionItem> getFormatActionList() {
+        return Arrays.asList(
                 new ActionItem(R.string.abid_todotxt_toggle_done, R.drawable.ic_check_box_black_24dp, R.string.toggle_done),
                 new ActionItem(R.string.abid_todotxt_add_context, R.drawable.gs_email_sign_black_24dp, R.string.add_context),
                 new ActionItem(R.string.abid_todotxt_add_project, R.drawable.ic_new_label_black_24dp, R.string.add_project),
                 new ActionItem(R.string.abid_todotxt_priority, R.drawable.ic_star_border_black_24dp, R.string.priority),
-                new ActionItem(R.string.abid_common_delete_lines, R.drawable.ic_delete_black_24dp, R.string.delete_lines),
-                new ActionItem(R.string.abid_common_open_link_browser, R.drawable.ic_open_in_browser_black_24dp, R.string.open_link),
-                new ActionItem(R.string.abid_common_attach_something, R.drawable.ic_attach_file_black_24dp, R.string.attach),
-                new ActionItem(R.string.abid_common_special_key, R.drawable.ic_keyboard_black_24dp, R.string.special_key),
                 new ActionItem(R.string.abid_todotxt_archive_done_tasks, R.drawable.ic_archive_black_24dp, R.string.archive_completed_tasks),
+                new ActionItem(R.string.abid_todotxt_due_date, R.drawable.ic_date_range_black_24dp, R.string.due_date),
                 new ActionItem(R.string.abid_todotxt_sort_todo, R.drawable.ic_sort_by_alpha_black_24dp, R.string.sort_by),
-                new ActionItem(R.string.abid_todotxt_current_date, R.drawable.ic_date_range_black_24dp, R.string.current_date),
-                new ActionItem(R.string.abid_common_new_line_below, R.drawable.ic_baseline_keyboard_return_24, R.string.start_new_line_below),
-                new ActionItem(R.string.abid_common_move_text_one_line_up, R.drawable.ic_baseline_arrow_upward_24, R.string.move_text_one_line_up),
-                new ActionItem(R.string.abid_common_move_text_one_line_down, R.drawable.ic_baseline_arrow_downward_24, R.string.move_text_one_line_down),
-                new ActionItem(R.string.abid_common_insert_snippet, R.drawable.ic_baseline_file_copy_24, R.string.insert_snippet),
-
-                new ActionItem(R.string.abid_common_web_jump_to_very_top_or_bottom, R.drawable.ic_vertical_align_center_black_24dp, R.string.jump_to_bottom, ActionItem.DisplayMode.VIEW),
-                new ActionItem(R.string.abid_common_rotate_screen, R.drawable.ic_rotate_left_black_24dp, R.string.rotate, ActionItem.DisplayMode.ANY),
-        };
-
-        return Arrays.asList(TMA_ACTIONS);
+                new ActionItem(R.string.abid_common_insert_link, R.drawable.ic_link_black_24dp, R.string.insert_link),
+                new ActionItem(R.string.abid_common_insert_image, R.drawable.ic_image_black_24dp, R.string.insert_image),
+                new ActionItem(R.string.abid_common_insert_audio, R.drawable.ic_keyboard_voice_black_24dp, R.string.audio)
+        );
     }
 
     @Override
@@ -110,76 +97,25 @@ public class TodoTxtActionButtons extends ActionButtonBase {
                 return true;
             }
             case R.string.abid_todotxt_add_context: {
-                addRemoveItems("@", TodoTxtTask::getContexts);
+                addRemoveItems("@", R.string.insert_context, TodoTxtTask::getContexts);
                 return true;
             }
             case R.string.abid_todotxt_add_project: {
-                addRemoveItems("+", TodoTxtTask::getProjects);
+                addRemoveItems("+", R.string.insert_project, TodoTxtTask::getProjects);
                 return true;
             }
             case R.string.abid_todotxt_priority: {
                 MarkorDialogFactory.showPriorityDialog(getActivity(), selTasks.get(0).getPriority(), (priority) -> {
-                    ArrayList<ReplacePattern> patterns = new ArrayList<>();
-                    if (priority.length() > 1) {
-                        patterns.add(new ReplacePattern(TodoTxtTask.PATTERN_PRIORITY_ANY, ""));
-                    } else if (priority.length() == 1) {
-                        final String _priority = String.format("(%c) ", priority.charAt(0));
-                        patterns.add(new ReplacePattern(TodoTxtTask.PATTERN_PRIORITY_ANY, _priority));
-                        patterns.add(new ReplacePattern("^\\s*", _priority));
-                    }
-                    runRegexReplaceAction(patterns);
-                    trimLeadingWhiteSpace();
+                    setPriority(priority.length() == 1 ? priority.charAt(0) : TodoTxtTask.PRIORITY_NONE);
                 });
                 return true;
             }
-            case R.string.abid_todotxt_current_date: {
+            case R.string.abid_todotxt_due_date: {
                 setDueDate(_appSettings.getDueDateOffset());
                 return true;
             }
             case R.string.abid_todotxt_archive_done_tasks: {
-                final String last = _appSettings.getLastTodoDoneName(_document.getPath());
-                MarkorDialogFactory.showSttArchiveDialog(getActivity(), last, (callbackPayload) -> {
-                    callbackPayload = Document.normalizeFilename(callbackPayload);
-
-                    final ArrayList<TodoTxtTask> keep = new ArrayList<>();
-                    final ArrayList<TodoTxtTask> move = new ArrayList<>();
-                    final List<TodoTxtTask> allTasks = TodoTxtTask.getAllTasks(_hlEditor.getText());
-
-                    final int[] sel = TextViewUtils.getSelection(_hlEditor);
-                    final CharSequence text = _hlEditor.getText();
-                    final int[] selStart = TextViewUtils.getLineOffsetFromIndex(text, sel[0]);
-                    final int[] selEnd = TextViewUtils.getLineOffsetFromIndex(text, sel[1]);
-
-                    for (int i = 0; i < allTasks.size(); i++) {
-                        final TodoTxtTask task = allTasks.get(i);
-                        if (task.isDone()) {
-                            move.add(task);
-                            if (i <= selStart[0]) selStart[0]--;
-                            if (i <= selEnd[0]) selEnd[0]--;
-                        } else {
-                            keep.add(task);
-                        }
-                    }
-                    if (!move.isEmpty() && _document.testCreateParent()) {
-                        File doneFile = new File(_document.getFile().getParentFile(), callbackPayload);
-                        String doneFileContents = "";
-                        if (doneFile.exists() && doneFile.canRead()) {
-                            doneFileContents = GsFileUtils.readTextFileFast(doneFile).first.trim() + "\n";
-                        }
-                        doneFileContents += TodoTxtTask.tasksToString(move) + "\n";
-
-                        // Write to done file
-                        if (new Document(doneFile).saveContent(getActivity(), doneFileContents)) {
-                            final String tasksString = TodoTxtTask.tasksToString(keep);
-                            _hlEditor.setText(tasksString);
-                            _hlEditor.setSelection(
-                                    TextViewUtils.getIndexFromLineOffset(tasksString, selStart),
-                                    TextViewUtils.getIndexFromLineOffset(tasksString, selEnd)
-                            );
-                        }
-                    }
-                    _appSettings.setLastTodoDoneName(_document.getPath(), callbackPayload);
-                });
+                archiveDoneTasks();
                 return true;
             }
             case R.string.abid_todotxt_sort_todo: {
@@ -221,7 +157,50 @@ public class TodoTxtActionButtons extends ActionButtonBase {
                 }
                 return true;
             }
-            case R.string.abid_todotxt_current_date: {
+            case R.string.abid_todotxt_priority: {
+                final Editable text = _hlEditor.getText();
+                final int[] sel = TextViewUtils.getSelection(_hlEditor);
+                final int lineStart = TextViewUtils.getLineStart(text, sel[0]);
+                final int lineEnd = TextViewUtils.getLineEnd(text, sel[1]);
+                final List<TodoTxtTask> tasks = TodoTxtTask.getTasks(text, new int[]{sel[0], sel[1]});
+                char prevPriority = '\0', nextPriority = '\0';
+                boolean areAllSamePriority = true;
+                if (lineStart != 0) {
+                    final int prevLineStart = TextViewUtils.getLineStart(text, lineStart - 1);
+                    final int prevLineEnd = TextViewUtils.getLineEnd(text, prevLineStart);
+                    final String prevLine = text.subSequence(prevLineStart, prevLineEnd).toString();
+                    prevPriority = new TodoTxtTask(prevLine).getPriority();
+                }
+                if (lineEnd != text.length()) {
+                    final int nextLineStart = TextViewUtils.getLineStart(text, lineEnd + 1);
+                    final int nextLineEnd = TextViewUtils.getLineEnd(text, nextLineStart);
+                    final String nextLine = text.subSequence(nextLineStart, nextLineEnd).toString();
+                    nextPriority = new TodoTxtTask(nextLine).getPriority();
+                }
+                for (TodoTxtTask task : tasks) {
+                    if (task.getPriority() != tasks.get(0).getPriority()) {
+                        areAllSamePriority = false;
+                        break;
+                    }
+                }
+                if (areAllSamePriority) {
+                    if (prevPriority != tasks.get(0).getPriority() && prevPriority != '\0') {
+                        setPriority(prevPriority);
+                    } else if (nextPriority != tasks.get(tasks.size() - 1).getPriority() && nextPriority != '\0') {
+                        setPriority(nextPriority);
+                    } else {
+                        setPriority(TodoTxtTask.PRIORITY_NONE);
+                    }
+                } else {
+                    if (prevPriority != '\0') {
+                        setPriority(prevPriority);
+                    } else {
+                        setPriority(tasks.get(0).getPriority());
+                    }
+                }
+                return true;
+            }
+            case R.string.abid_todotxt_due_date: {
                 setDate();
                 return true;
             }
@@ -229,6 +208,48 @@ public class TodoTxtActionButtons extends ActionButtonBase {
                 return runCommonLongPressAction(action);
             }
         }
+    }
+
+    public void archiveDoneTasks() {
+        final String lastDoneName = _appSettings.getLastTodoDoneName(_document.path);
+        MarkorDialogFactory.showSttArchiveDialog(getActivity(), lastDoneName, callbackPayload -> {
+            final String doneName = Document.normalizeFilename(callbackPayload);
+            final CharSequence text = _hlEditor.getText();
+            final int[] sel = TextViewUtils.getSelection(text);
+            final int[][] offsets = TextViewUtils.getLineOffsetFromIndex(text, sel);
+
+            final ArrayList<TodoTxtTask> keep = new ArrayList<>();
+            final ArrayList<TodoTxtTask> move = new ArrayList<>();
+            final List<TodoTxtTask> allTasks = TodoTxtTask.getAllTasks(text);
+
+            for (int i = 0; i < allTasks.size(); i++) {
+                final TodoTxtTask task = allTasks.get(i);
+                if (task.isDone()) {
+                    move.add(task);
+                    if (i <= offsets[0][0]) offsets[0][0]--;
+                    if (i <= offsets[1][0]) offsets[1][0]--;
+                } else {
+                    keep.add(task);
+                }
+            }
+
+            if (!move.isEmpty() && _document.testCreateParent()) {
+                final File doneFile = new File(_document.file.getParentFile(), doneName);
+                final StringBuilder doneContents = new StringBuilder();
+                if (doneFile.exists() && doneFile.canRead()) {
+                    doneContents.append(GsFileUtils.readTextFileFast(doneFile).first.trim()).append("\n");
+                }
+                doneContents.append(TodoTxtTask.tasksToString(move)).append("\n");
+
+                // Write to done file
+                if (new Document(doneFile).saveContent(getActivity(), doneContents.toString())) {
+                    final String tasksString = TodoTxtTask.tasksToString(keep);
+                    _hlEditor.setText(tasksString);
+                    TextViewUtils.setSelectionFromOffsets(_hlEditor, offsets);
+                }
+            }
+            _appSettings.setLastTodoDoneName(_document.path, doneName);
+        });
     }
 
     @Override
@@ -243,7 +264,11 @@ public class TodoTxtActionButtons extends ActionButtonBase {
         return true;
     }
 
-    private void addRemoveItems(final String prefix, final GsCallback.r1<Collection<String>, List<TodoTxtTask>> keyGetter) {
+    private void addRemoveItems(
+            final String prefix,
+            final int titleResId,
+            final GsCallback.r1<Collection<String>, List<TodoTxtTask>> keyGetter
+    ) {
         final Set<String> all = new TreeSet<>(keyGetter.callback(TodoTxtTask.getAllTasks(_hlEditor.getText())));
         final TodoTxtTask additional = new TodoTxtTask(_appSettings.getTodotxtAdditionalContextsAndProjects());
         all.addAll(keyGetter.callback(Collections.singletonList(additional)));
@@ -252,7 +277,7 @@ public class TodoTxtActionButtons extends ActionButtonBase {
 
         final boolean append = _appSettings.isTodoAppendProConOnEndEnabled();
 
-        MarkorDialogFactory.showUpdateItemsDialog(getActivity(), R.string.insert_context, all, current,
+        MarkorDialogFactory.showUpdateItemsDialog(getActivity(), titleResId, all, current,
                 updated -> {
                     final TextViewUtils.ChunkedEditable chunk = TextViewUtils.ChunkedEditable.wrap(_hlEditor.getText());
                     for (final String item : GsCollectionUtils.setDiff(current, updated)) {
@@ -301,6 +326,10 @@ public class TodoTxtActionButtons extends ActionButtonBase {
 
     private static void insertInline(final Editable editable, String thing) {
         final int[] sel = TextViewUtils.getSelection(editable);
+        if (sel[0] < 0) {
+            return;
+        }
+
         if (sel[0] > 0) {
             final char before = editable.charAt(sel[0] - 1);
             if (before != ' ' && before != '\n') {
@@ -314,6 +343,19 @@ public class TodoTxtActionButtons extends ActionButtonBase {
             }
         }
         editable.replace(sel[0], sel[1], thing);
+    }
+
+    private void setPriority(char priority) {
+        ArrayList<ReplacePattern> patterns = new ArrayList<>();
+        if (priority == TodoTxtTask.PRIORITY_NONE) {
+            patterns.add(new ReplacePattern(TodoTxtTask.PATTERN_PRIORITY_ANY, ""));
+        } else {
+            final String _priority = String.format("(%c) ", priority);
+            patterns.add(new ReplacePattern(TodoTxtTask.PATTERN_PRIORITY_ANY, _priority));
+            patterns.add(new ReplacePattern("^\\s*", _priority));
+        }
+        runRegexReplaceAction(patterns);
+        trimLeadingWhiteSpace();
     }
 
     private static Calendar parseDateString(final String dateString, final Calendar fallback) {
@@ -331,12 +373,15 @@ public class TodoTxtActionButtons extends ActionButtonBase {
     }
 
     private void setDate() {
-        final int[] sel = TextViewUtils.getSelection(_hlEditor);
         final Editable text = _hlEditor.getText();
+        final int[] sel = TextViewUtils.getSelection(text);
+        if (text == null || sel[0] < 0) {
+            return;
+        }
         final String selStr = text.subSequence(sel[0], sel[1]).toString();
-        Calendar initDate = parseDateString(selStr, Calendar.getInstance());
+        final Calendar initDate = parseDateString(selStr, Calendar.getInstance());
 
-        DatePickerDialog.OnDateSetListener listener = (_view, year, month, day) -> {
+        final DatePickerDialog.OnDateSetListener listener = (_view, year, month, day) -> {
             Calendar fmtCal = Calendar.getInstance();
             fmtCal.set(year, month, day);
             final String newDate = TodoTxtTask.DATEF_YYYY_MM_DD.format(fmtCal.getTime());
@@ -344,7 +389,6 @@ public class TodoTxtActionButtons extends ActionButtonBase {
         };
 
         new DateFragment()
-                .setActivity(getActivity())
                 .setListener(listener)
                 .setCalendar(initDate)
                 .show(((FragmentActivity) getActivity()).getSupportFragmentManager(), "date");
@@ -373,7 +417,6 @@ public class TodoTxtActionButtons extends ActionButtonBase {
         };
 
         new DateFragment()
-                .setActivity(getActivity())
                 .setListener(listener)
                 .setCalendar(initDate)
                 .setMessage(getContext().getString(R.string.due_date))
@@ -392,7 +435,6 @@ public class TodoTxtActionButtons extends ActionButtonBase {
         private DatePickerDialog.OnClickListener _extraListener;
         private String _extraLabel;
 
-        private Activity _activity;
         private int _year;
         private int _month;
         private int _day;
@@ -415,11 +457,6 @@ public class TodoTxtActionButtons extends ActionButtonBase {
 
         public DateFragment setExtraLabel(String label) {
             _extraLabel = label;
-            return this;
-        }
-
-        public DateFragment setActivity(Activity activity) {
-            _activity = activity;
             return this;
         }
 
@@ -452,10 +489,10 @@ public class TodoTxtActionButtons extends ActionButtonBase {
 
         @NonNull
         @Override
-        public DatePickerDialog onCreateDialog(Bundle savedInstanceState) {
+        public DatePickerDialog onCreateDialog(final Bundle savedInstanceState) {
             super.onCreateDialog(savedInstanceState);
 
-            DatePickerDialog dialog = new DatePickerDialog(_activity, _listener, _year, _month, _day);
+            final DatePickerDialog dialog = new DatePickerDialog(getContext(), _listener, _year, _month, _day);
 
             if (_message != null && !_message.isEmpty()) {
                 dialog.setMessage(_message);
@@ -466,6 +503,15 @@ public class TodoTxtActionButtons extends ActionButtonBase {
             }
 
             return dialog;
+        }
+
+        @Override
+        public void onCreate(final Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // Do not auto-recreate
+            if (savedInstanceState != null) {
+                dismiss();
+            }
         }
     }
 }

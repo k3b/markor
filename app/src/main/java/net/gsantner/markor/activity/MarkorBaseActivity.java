@@ -4,20 +4,17 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.WindowManager;
 
 import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 
 import net.gsantner.markor.ApplicationObject;
 import net.gsantner.markor.R;
 import net.gsantner.markor.model.AppSettings;
 import net.gsantner.markor.util.MarkorContextUtils;
 import net.gsantner.opoc.frontend.base.GsActivityBase;
-import net.gsantner.opoc.util.GsCollectionUtils;
-
-import java.util.List;
+import net.gsantner.opoc.frontend.base.GsFragmentBase;
 
 public abstract class MarkorBaseActivity extends GsActivityBase<AppSettings, MarkorContextUtils> {
 
@@ -36,9 +33,13 @@ public abstract class MarkorBaseActivity extends GsActivityBase<AppSettings, Mar
         }
     }
 
+    protected boolean onReceiveKeyPress(GsFragmentBase fragment, int keyCode, KeyEvent event) {
+        return fragment.onReceiveKeyPress(keyCode, event);
+    }
+
     @Override
     public Integer getNewNavigationBarColor() {
-        return _cu.parseHexColorString(_appSettings.getNavigationBarColor());
+        return _appSettings.getAppThemeName().contains("black") ? Color.BLACK : null;
     }
 
     @Override

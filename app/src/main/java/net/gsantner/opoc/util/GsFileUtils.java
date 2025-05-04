@@ -1,9 +1,9 @@
 /*#######################################################
  *
- * SPDX-FileCopyrightText: 2017-2023 Gregor Santner <gsantner AT mailbox DOT org>
+ * SPDX-FileCopyrightText: 2017-2025 Gregor Santner <gsantner AT mailbox DOT org>
  * SPDX-License-Identifier: Unlicense OR CC0-1.0
  *
- * Written 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ * Written 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  * To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 #########################################################*/
@@ -14,9 +14,15 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import net.gsantner.opoc.format.GsTextUtils;
+import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserListAdapter;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -33,7 +39,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
@@ -41,8 +54,10 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -70,14 +85,15 @@ public class GsFileUtils {
         public boolean ioError = false;
     }
 
-    public static Pair<String, FileInfo> readTextFileFast(final File file) {
-        final FileInfo info = new FileInfo();
+    public static Pair<String, FileInfo> readInputStreamFast(final InputStream inputStream, @Nullable FileInfo info) {
+        info = info == null ? new FileInfo() : info;
 
-        try (final FileInputStream inputStream = new FileInputStream(file)) {
+        try {
             final ByteArrayOutputStream result = new ByteArrayOutputStream();
 
             final byte[] bomBuffer = new byte[3];
             final int bomReadLength = inputStream.read(bomBuffer);
+
             info.hasBom = bomReadLength == 3 &&
                     bomBuffer[0] == (byte) 0xEF &&
                     bomBuffer[1] == (byte) 0xBB &&
@@ -95,10 +111,23 @@ public class GsFileUtils {
                 result.write(buffer, 0, length);
             }
             return new Pair<>(result.toString("UTF-8"), info);
+        } catch (IOException e) {
+            e.printStackTrace();
+            info.ioError = true;
+        }
+
+        return new Pair<>("", info);
+    }
+
+    public static Pair<String, FileInfo> readTextFileFast(final File file) {
+        final FileInfo info = new FileInfo();
+
+        try (final FileInputStream inputStream = new FileInputStream(file)) {
+            return readInputStreamFast(inputStream, info);
         } catch (FileNotFoundException e) {
             System.err.println("readTextFileFast: File " + file + " not found.");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("readTextFileFast: File " + file + " could not be read.");
             info.ioError = true;
         }
 
@@ -265,6 +294,7 @@ public class GsFileUtils {
                     is.close();
                 }
                 if (os != null) {
+                    os.flush();
                     os.close();
                 }
             }
@@ -434,6 +464,8 @@ public class GsFileUtils {
             return "text/markdown";
         } else if (ext.matches("(te?xt)|(taskpaper)")) {
             return "text/plain";
+        } else if (ext.matches("org")) {
+            return "text/org";
         } else if (ext.matches("webp")) {
             return "image/webp";
         } else if (ext.matches("jpe?g")) {
@@ -497,9 +529,27 @@ public class GsFileUtils {
         return mime;
     }
 
-    public static boolean isTextFile(File file) {
+    public static boolean isTextFile(final File file) {
         final String mime = getMimeType(file);
-        return mime != null && mime.startsWith("text/");
+        return mime != null && (mime.startsWith("text/") || mime.contains("xml")) && !mime.contains("openxml");
+    }
+
+    /**
+     * Reads the first kb of a file and checks if it is likely a text file
+     **/
+    public static boolean isContentsPlainText(final File file) {
+        // Empty files are considered text files
+        if (file.length() == 0) {
+            return true;
+        }
+
+        try (final FileInputStream fis = new FileInputStream(file)) {
+            final byte[] bytes = readCloseStreamWithSize(fis, 1024);
+            Charset.forName("UTF-8").newDecoder().decode(java.nio.ByteBuffer.wrap(bytes));
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     /**
@@ -644,16 +694,23 @@ public class GsFileUtils {
 
     // Get the title of the file
     public static String getFilenameWithoutExtension(final File file) {
-        final String name = file.getName();
-        final int doti = name.lastIndexOf(".");
-        return (doti < 0) ? name : name.substring(0, doti);
+        return getNameWithoutExtension(file.getName());
     }
 
-    /// Get the file extension of the file, including dot
+    public static String getNameWithoutExtension(final String fileName) {
+        final int doti = fileName.lastIndexOf(".");
+        return (doti < 0) ? fileName : fileName.substring(0, doti);
+    }
+
     public static String getFilenameExtension(final File file) {
-        final String name = file.getName().replace(".jenc", "");
-        final int doti = name.lastIndexOf(".");
-        return (doti < 0) ? "" : name.substring(doti).toLowerCase();
+        return getFilenameExtension(file.getName());
+    }
+
+    /// Get the file extension of the file, with dot
+    public static String getFilenameExtension(String name) {
+        name = name.replace(".jenc", "");
+        final int doti = name.indexOf(".");
+        return (doti < 0) ? "" : name.substring(doti).toLowerCase().trim();
     }
 
     public static String getFilteredFilenameWithoutDisallowedChars(String str, final boolean... a1NoRCEguard) {
@@ -695,8 +752,8 @@ public class GsFileUtils {
      * This is highly performant as each file is processed exactly once.
      * Inspired by python's sort
      *
-     * @param sortBy   String key of what to sort
-     * @param file     The file object to get the
+     * @param sortBy String key of what to sort
+     * @param file   The file object to get the
      * @return A key which can be used for comparisons / sorting
      */
     private static String makeSortKey(final String sortBy, final File file) {
@@ -706,7 +763,7 @@ public class GsFileUtils {
                 return file.lastModified() + name;
             }
             case SORT_BY_FILESIZE: {
-                return file.length() + name;
+                return String.format("%015d", file.length()) + name;
             }
             case SORT_BY_MIMETYPE: {
                 return getMimeType(file).toLowerCase() + name;
@@ -718,20 +775,57 @@ public class GsFileUtils {
         }
     }
 
-    public static void sortFiles(
-            final List<File> filesToSort,
-            final String sortBy,
-            final boolean folderFirst,
-            final boolean reverse
-    ) {
+    public static class SortOrder {
+        public String sortByType = SORT_BY_NAME;
+        public boolean reverse = false;
+        public boolean showDotFiles = false;
+        public boolean folderFirst = true;
+        public boolean isFolderLocal = false;
+
+        private final static String SORT_BY_KEY = "SORT_BY";
+        private final static String REVERSE_KEY = "REVERSE";
+        private final static String SHOW_DOT_FILES_KEY = "SHOW_DOT_FILES";
+        private final static String FOLDER_FIRST_KEY = "FOLDER_FIRST";
+
+        @NonNull
+        @Override
+        public String toString() {
+            final Map<String, String> map = new HashMap<>();
+            map.put(SORT_BY_KEY, sortByType);
+            map.put(REVERSE_KEY, String.valueOf(reverse));
+            map.put(SHOW_DOT_FILES_KEY, String.valueOf(showDotFiles));
+            map.put(FOLDER_FIRST_KEY, String.valueOf(folderFirst));
+            return GsTextUtils.mapToJsonString(map);
+        }
+
+        public static SortOrder fromString(final String json) {
+            final SortOrder fso = new SortOrder();
+            final Map<String, String> map = GsTextUtils.jsonStringToMap(json);
+            fso.sortByType = GsCollectionUtils.getOrDefault(map, SORT_BY_KEY, SORT_BY_NAME);
+            fso.reverse = Boolean.parseBoolean(GsCollectionUtils.getOrDefault(map, REVERSE_KEY, "false"));
+            fso.showDotFiles = Boolean.parseBoolean(GsCollectionUtils.getOrDefault(map, SHOW_DOT_FILES_KEY, "false"));
+            fso.folderFirst = Boolean.parseBoolean(GsCollectionUtils.getOrDefault(map, FOLDER_FIRST_KEY, "true"));
+            return fso;
+        }
+    }
+
+    public static void sortFiles(final Collection<File> filesToSort, final SortOrder order) {
         if (filesToSort != null && !filesToSort.isEmpty()) {
             try {
-                GsCollectionUtils.keySort(filesToSort, (f) -> makeSortKey(sortBy, f));
-                if (reverse) {
-                    Collections.reverse(filesToSort);
+                final boolean copy = !(filesToSort instanceof List);
+                final List<File> sortable = copy ? new ArrayList<>(filesToSort) : (List<File>) filesToSort;
+
+                GsCollectionUtils.keySort(sortable, (f) -> makeSortKey(order.sortByType, f));
+                if (order.reverse) {
+                    Collections.reverse(sortable);
                 }
-                if (folderFirst) {
-                    GsCollectionUtils.keySort(filesToSort, (f) -> !f.isDirectory());
+                if (order.folderFirst) {
+                    GsCollectionUtils.keySort(sortable, (f) -> !f.isDirectory());
+                }
+
+                if (copy) {
+                    filesToSort.clear();
+                    filesToSort.addAll(sortable);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -751,12 +845,16 @@ public class GsFileUtils {
     }
 
     /**
-     * Check if a file can be created (parent exists and can be written)
+     * Check if a file can be created.
+     * Checks if closest ancestor is writeable.
      */
-    public static boolean canCreate(final File file) {
-        return isWritable(file) || isWritable(file.getParentFile());
+    public static boolean canCreate(File file) {
+        // A file is creatable if the first existing ancestor is writeable
+        while (file != null && !file.exists()) {
+            file = file.getParentFile();
+        }
+        return isWritable(file);
     }
-
 
     /**
      * Check if file is child of folder. A folder is not its own child.
@@ -766,7 +864,7 @@ public class GsFileUtils {
      * @return if parent is a child of test
      */
     public static boolean isChild(final File parent, File test) {
-        if (parent.equals(test)) {
+        if (test == null || parent == null || parent.equals(test)) {
             return false;
         }
 
@@ -821,6 +919,78 @@ public class GsFileUtils {
                 outputStream.write(buffer, 0, bytesRead);
             }
         } catch (IOException ignored) {
+        }
+    }
+
+    public static File makeAbsolute(final String path, final File base) {
+        return path != null ? makeAbsolute(new File(path.trim()), base) : null;
+    }
+
+    public static File makeAbsolute(final File file, final File base) {
+        if (file == null) {
+            return null;
+        } else if (file.isAbsolute()) {
+            return file;
+        } else if (base != null) {
+            return new File(base, file.getPath()).getAbsoluteFile();
+        } else {
+            return null;
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static List<File> searchFiles(final File root, String glob) {
+        try {
+            glob = glob.trim();
+            glob = glob.startsWith("glob:") ? glob : "glob:" + glob;
+
+            final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob);
+            final List<File> found = new ArrayList<>();
+            Files.walkFileTree(root.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(final Path path, final BasicFileAttributes attrs) {
+                    if (matcher.matches(path)) {
+                        found.add(path.toFile());
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            return found;
+        } catch (IOException e) {
+            Log.d(GsFileUtils.class.getName(), e.toString());
+        }
+        return null;
+    }
+
+    public static String getPath(final File file) {
+        try {
+            return file.getCanonicalPath();
+        } catch (IOException e) {
+            return file.getAbsolutePath();
+        } catch (NullPointerException e) {
+            return "";
+        }
+    }
+
+    public static boolean isDirectory(final File file) {
+        return file != null && (GsFileBrowserListAdapter.isVirtualFolder(file) || file.isDirectory());
+    }
+
+    public static boolean exists(final File file) {
+        return file != null && (GsFileBrowserListAdapter.isVirtualFolder(file) || file.exists());
+    }
+
+    public static boolean isSymbolicLink(final File file) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return Files.isSymbolicLink(file.toPath());
+        } else {
+            try {
+                final File actualParent = file.getCanonicalFile().getParentFile();
+                final File parent = file.getParentFile();
+                return actualParent == null || !actualParent.equals(parent);
+            } catch (IOException | NullPointerException ignored) {
+                return false;
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Opret mappe</string>
     <string name="create_new_document">Opret nyt dokument</string>
     <string name="move">Flyt</string>
-    <string name="copy">Kopiér</string>
     <string name="info">Info</string>
     <string name="file_folder_already_exists_please_use_a_different_name">Fil/mappe findes allerede! Brug venligst et andet navn</string>
     <string name="import_from_device">Importér fra enhed</string>
@@ -68,7 +67,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">Skjul statuslinje</string>
     <string name="name">Navn</string>
     <string name="url_or_path">URL / Sti</string>
-    <string name="insert_link">Indsæt link</string>
     <string name="insert_image">Indsæt billede</string>
     <string name="contributors">Bidragsydere</string>
     <string name="save_location">Gem lokation</string>
@@ -176,15 +174,13 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="special_key">Specialtast</string>
     <string name="key_page_up">Side op (Page Up)</string>
     <string name="key_page_down">Side ned (Page Down)</string>
-    <string name="move_text_one_line_up">Flyt tekst en linje op</string>
-    <string name="move_text_one_line_down">Flyt tekst en linje ned</string>
-    <string name="start_new_line_below">Start ny linje nedenfor</string>
     <string name="key_pos_1">Liniestart (Pos Home)</string>
     <string name="key_pos_end">Linieendelse (Pos End)</string>
     <string name="key_pos_1_document">Dokumentstart</string>
     <string name="key_pos_end_document">Dokumentendelse</string>
     <string name="key_ctrl_a">Vælg alle (Ctrl+A)</string>
     <string name="key_tab">Tabulator</string>
+    <string name="zero_width_space">Zero-bredde plads</string>
     <string name="start_on_bottom">Start på bunden</string>
     <string name="start_on_bottom_when_loading_document">Når dokumentet er hentet, positionér cursoren ved enden</string>
     <string name="unordered_list_character">Uordnet listetegn</string>
@@ -248,7 +244,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">Ingen kalender-app installeret</string>
     <string name="popular_documents">Populære dokumenter</string>
     <string name="color">Farve</string>
-    <string name="zero_width_space">Zero-bredde plads</string>
     <string name="basic_color_scheme">Grundlæggende farvetema</string>
     <string name="background_foreground_color_in_editor_works_dark_light">Ændrer baggrunden og forgrundsfarven på teksteditoren. Justerer til app tema så tilgængelig i lys og mørk tema. Syntaksfremhævning farver forbliver den samme.</string>
     <string name="preset">Forudindstilling</string>
@@ -266,7 +261,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">Vælg dato</string>
     <string name="pick_time">Vælg tidspunkt</string>
     <string name="get_format_instead_date_or_time">Hent format i stedet dato eller tid</string>
-    <string name="always_use_current_date_and_time">Benyt altid aktuel dato &amp; tid</string>
     <string name="result">Resultat</string>
     <string name="just_time">Kun tid</string>
     <string name="just_date">Kun dato</string>
@@ -308,7 +302,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="reload">Genindlæs</string>
     <string name="wrap_words">Ombryd ord</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">Blød pause, hvis teksten ikke passer til skærmbredden. Else aktivere vandret rulning.</string>
-    <string name="recursive_search_in_current_directory">Rekursiv søgning i den aktuelle mappe.</string>
     <string name="always_open_with_this_app">Åbn altid med denne app</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">Åbn altid filer med denne app, når listen indeholder filtypen. Brug \'Ingen, .html, . Ss, .js\' for eksempel, hvis du ønsker at redigere web-filer og dem uden filtypenavn.</string>
     <string name="open_file_with">Åbn fil med</string>

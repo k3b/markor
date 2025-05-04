@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Luo kansio</string>
     <string name="create_new_document">Luo uusi asiakirja</string>
     <string name="move">Siirrä</string>
-    <string name="copy">Kopioi</string>
     <string name="info">Tiedot</string>
     <string name="file_folder_already_exists_please_use_a_different_name">Tiedosto / kansio on jo olemassa! Käytä toista nimeä</string>
     <string name="import_from_device">Tuo laitteelta</string>
@@ -68,7 +67,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">Piilota tilarivi</string>
     <string name="name">Nimi</string>
     <string name="url_or_path">URL / polku</string>
-    <string name="insert_link">Lisää linkki</string>
     <string name="insert_image">Lisää kuva</string>
     <string name="contributors">Osallistujat</string>
     <string name="save_location">Tallenna sijainti</string>
@@ -176,15 +174,13 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="special_key">Erikoisnäppäin</string>
     <string name="key_page_up">Sivu ylös (Page Up)</string>
     <string name="key_page_down">Sivu alas (Page down)</string>
-    <string name="move_text_one_line_up">Siirrä tekstiä yksi rivi ylöspäin</string>
-    <string name="move_text_one_line_down">Siirrä tekstiä yksi rivi alaspäin</string>
-    <string name="start_new_line_below">Aloita uusi rivi alla</string>
     <string name="key_pos_1">Rivin alku (Pos Home)</string>
     <string name="key_pos_end">Rivin loppu (Pos End)</string>
     <string name="key_pos_1_document">Asiakirjan alku</string>
     <string name="key_pos_end_document">Asiakirjan loppu</string>
     <string name="key_ctrl_a">Valitse kaikki (Ctrl+A)</string>
     <string name="key_tab">Sarkain</string>
+    <string name="zero_width_space">Tila nollaleveydelle</string>
     <string name="start_on_bottom">Aloita alhaalta</string>
     <string name="start_on_bottom_when_loading_document">Kun asiakirja ladataan, aseta osoitin sen päähän</string>
     <string name="unordered_list_character">Järjestämättömän listan kirjoitusmerkki</string>
@@ -248,7 +244,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">Kalenterisovellusta ei ole asennettu!</string>
     <string name="popular_documents">Suositut asiakirjat</string>
     <string name="color">Väri</string>
-    <string name="zero_width_space">Tila nollaleveydelle</string>
     <string name="basic_color_scheme">Perusväriteema</string>
     <string name="background_foreground_color_in_editor_works_dark_light">Muuttaa tekstin editorin taustan ja edustan väriä. Mukautukset sovellusteemaan, joten saatavilla vaaleassa ja tummassa teemassa. Syntaksin korostus värit pysyvät samoina.</string>
     <string name="preset">Preset</string>
@@ -266,7 +261,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">Valitse päivämäärä</string>
     <string name="pick_time">Valitse aika</string>
     <string name="get_format_instead_date_or_time">Hanki muoto sen sijaan päivämäärä tai aika</string>
-    <string name="always_use_current_date_and_time">Käytä aina nykyistä päivämäärää &amp; aikaa</string>
     <string name="result">Tulos</string>
     <string name="just_time">Vain aika</string>
     <string name="just_date">Vain päivämäärä</string>
@@ -308,7 +302,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="reload">Reload</string>
     <string name="wrap_words">Rivitä sanat</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">Pehmeä tauko, jos teksti ei sovi näytön leveyteen.</string>
-    <string name="recursive_search_in_current_directory">Rekursiivinen haku nykyisessä hakemistossa.</string>
     <string name="always_open_with_this_app">Avaa aina tällä sovelluksella</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">Avaa aina tiedostoja tällä sovelluksella, kun lista sisältää tiedostopäätteen. Käytä \'Ei mitään, .html, . ss , .js esimerkiksi jos haluat muokata web-tiedostoja ja niitä ilman tiedostopäätettä.</string>
     <string name="open_file_with">Avaa tiedosto ohjelmalla</string>

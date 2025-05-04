@@ -11,8 +11,6 @@ package net.gsantner.opoc.util;
 
 import android.util.Pair;
 
-import androidx.lifecycle.LifecycleKt;
-
 import net.gsantner.opoc.wrapper.GsCallback;
 
 import java.util.ArrayList;
@@ -20,9 +18,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 // Class for general utilities
@@ -128,14 +128,8 @@ public class GsCollectionUtils {
     /**
      * Check if 2 collections have the same elements
      */
-    public static <T> boolean setEquals(Collection<T> a, Collection<T> b) {
-        a = a != null ? a : Collections.emptySet();
-        b = b != null ? b : Collections.emptySet();
-
-        a = a instanceof Set ? a : new HashSet<>(a);
-        b = b instanceof Set ? b : new HashSet<>(b);
-
-        return a.equals(b);
+    public static <T> boolean setEquals(final Collection<T> a, final Collection<T> b) {
+        return (a == b) || (a != null && b != null && a.size() == b.size() && a.containsAll(b));
     }
 
     /**
@@ -160,12 +154,37 @@ public class GsCollectionUtils {
     public static <T, V> V accumulate(
             final Collection<T> collection,
             final GsCallback.r2<V, ? super T, V> func,
-            final V initial) {
+            final V initial
+    ) {
         V val = initial;
         for (final T item : collection) {
             val = func.callback(item, val);
         }
         return val;
+    }
+
+    public static <T> boolean any(
+            final Collection<T> collection,
+            final GsCallback.b1<T> predicate
+    ) {
+        for (final T item : collection) {
+            if (predicate.callback(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static <T> boolean all(
+            final Collection<T> collection,
+            final GsCallback.b1<T> predicate
+    ) {
+        for (final T item : collection) {
+            if (!predicate.callback(item)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -196,6 +215,15 @@ public class GsCollectionUtils {
         return sel;
     }
 
+    public static <T> T selectFirst(final Collection<T> data, final GsCallback.b1<? super T> predicate) {
+        for (final T item : data) {
+            if (predicate.callback(item)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     /**
      * Get a list of values (like np.arange())
      *
@@ -224,5 +252,47 @@ public class GsCollectionUtils {
         }
 
         return values;
+    }
+
+    public static <K, V> Map<V, K> reverse(final Map<K, V> map) {
+        final Map<V, K> reversed = new HashMap<>();
+        for (final Map.Entry<K, V> entry : map.entrySet()) {
+            reversed.put(entry.getValue(), entry.getKey());
+        }
+        return reversed;
+    }
+
+    public static <K, V> V getOrDefault(final Map<K, V> map, final K key, final V defaultValue) {
+        return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+
+    public static <K, V> K reverseSearch(final Map<K, V> map, final V value) {
+        for (final Map.Entry<K, V> entry : map.entrySet()) {
+            if (entry.getValue().equals(value)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public static <T> void deduplicate(final Collection<T> data) {
+        if (!(data instanceof Set)) {
+            final LinkedHashSet<T> deduped = new LinkedHashSet<>(data);
+            data.clear();
+            data.addAll(deduped);
+        }
+    }
+
+    public static <T> void removeIf(final Collection<T> data, final GsCallback.b1<? super T> predicate) {
+        final Iterator<T> iter = data.iterator();
+        while (iter.hasNext()) {
+            if (predicate.callback(iter.next())) {
+                iter.remove();
+            }
+        }
+    }
+
+    public static <T> void keepIf(final Collection<T> data, final GsCallback.b1<? super T> predicate) {
+        removeIf(data, (v) -> !predicate.callback(v));
     }
 }

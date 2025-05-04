@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -25,7 +25,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Krei Dosierujon</string>
     <string name="create_new_document">Krei novan dokumenton</string>
     <string name="move">Movi</string>
-    <string name="copy">Kopii</string>
     <string name="info">Informo</string>
     <string name="file_folder_already_exists_please_use_a_different_name">Dosiero/dosierujo jam ekzistas! Bonvolu uzi malsaman nomon</string>
     <string name="import_from_device">Enporti el aparato</string>
@@ -57,7 +56,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="select_entries">Elekti elementojn</string>
     <string name="hide_statusbar">Kaŝu statbreton</string>
     <string name="name">Dosiernomo</string>
-    <string name="insert_link">Enmeti Ligilon</string>
     <string name="insert_image">Enmeti Bildon</string>
     <string name="contributors">Kontribuantoj</string>
     <string name="licenses">Permesiloj</string>
@@ -138,6 +136,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">Projekta permesilo</string>
     <string name="contribute_code_to_this_project_anybody_welcome">Kontribuu kodon al la projekto. Ĉiuj bonvenas fari tion, inkluzive de novuloj</string>
     <string name="project_team">Projekta teamo</string>
+    <string name="community">Komunumo</string>
     <string name="contributors_public_add_yourself_description">Montri informojn pri kontribuanto. Provizu ĝin montri ĉi tie sur elektebla bazo post kontribuado</string>
     <string name="ascending">ascenda</string>
     <string name="location">Loko</string>

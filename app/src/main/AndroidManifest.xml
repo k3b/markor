@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
 /*#######################################################
  *
- *   Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
@@ -12,7 +12,6 @@
 <!-- Do NOT run auto format on this file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="net.gsantner.markor"
     tools:targetApi="jelly_bean">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -20,7 +19,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <uses-permission
@@ -30,6 +28,7 @@
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
+
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
@@ -64,22 +63,23 @@
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:taskAffinity=".activity.MainActivity"
             android:windowSoftInputMode="stateUnchanged|adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".activity.SettingsActivity"
             android:label="@string/settings"
             android:parentActivityName=".activity.MainActivity" />
+
         <activity
             android:name=".activity.StoragePermissionActivity"
             android:label="@string/permissions"
             android:parentActivityName=".activity.MainActivity" />
+
         <activity
             android:name=".activity.ActionButtonSettingsActivity"
             android:parentActivityName=".activity.SettingsActivity">
@@ -87,6 +87,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activity.SettingsActivity" />
         </activity>
+
         <activity
             android:name="other.writeily.widget.WrWidgetConfigure"
             android:exported="true">
@@ -101,7 +102,6 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/markor_widget" />
@@ -109,6 +109,21 @@
 
         <service
             android:name="other.writeily.widget.WrFilesWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <receiver
+            android:name=".widget.TodoWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/todo_widget" />
+        </receiver>
+
+        <service
+            android:name=".widget.TodoWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <provider
@@ -127,14 +142,12 @@
             android:exported="true"
             android:icon="@drawable/ic_launcher_todo"
             android:label="@string/todo"
-            android:noHistory="true"
-            android:taskAffinity=".activity.MainActivity">
+            android:noHistory="true">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-
 
         <activity
             android:name=".activity.IntroActivity"
@@ -146,56 +159,54 @@
             android:exported="true"
             android:icon="@drawable/ic_launcher_quicknote"
             android:label="@string/quicknote"
-            android:noHistory="true"
-            android:taskAffinity=".activity.MainActivity">
+            android:noHistory="true">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".activity.openeditor.OpenShareIntoActivity"
             android:enabled="false"
             android:exported="true"
             android:icon="@drawable/ic_launcher_share_into"
             android:label="@string/share_into"
-            android:noHistory="true"
-            android:taskAffinity=".activity.MainActivity">
+            android:noHistory="true">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".activity.openeditor.OpenFromShortcutOrWidgetActivity"
-            android:launchMode="singleTop"
+            android:launchMode="standard"
             android:theme="@android:style/Theme.NoDisplay" />
+
         <activity
             android:name=".activity.DocumentActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="standard"
             android:maxRecents="5"
-            android:parentActivityName=".activity.MainActivity"
-            android:taskAffinity=".activity.DocumentActivity"
             android:theme="@style/AppTheme.Unified.StartupFlash"
             android:windowSoftInputMode="stateUnchanged|adjustResize"
             tools:targetApi="lollipop">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="net.gsantner.markor.activity.MainActivity" />
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+                <action android:name="com.google.android.gm.action.AUTO_SEND" />
+                <action android:name="com.google.android.gms.actions.CREATE_NOTE" />
 
                 <category android:name="android.intent.category.DEFAULT" />
-
-                <action android:name="com.google.android.gm.action.AUTO_SEND" />
                 <category android:name="com.google.android.voicesearch.SELF_NOTE" />
-                <action android:name="android.intent.action.PROCESS_TEXT" />
 
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="text/*" />
+                <data android:mimeType="*/*" />
             </intent-filter>
 
             <intent-filter tools:ignore="AppLinkUrlError">
@@ -1080,6 +1091,22 @@
 
             </intent-filter>
         </activity>
+
+        <activity-alias
+            android:name="AliasDocumentProcessText"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:targetActivity=".activity.DocumentActivity"
+            android:enabled="false">
+
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
     <queries>

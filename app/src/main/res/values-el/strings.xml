@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Δημιουργία Φακέλου</string>
     <string name="create_new_document">Δημιουργία νέου εγγράφου</string>
     <string name="move">Μετακίνηση</string>
-    <string name="copy">Αντιγραφή</string>
     <string name="info">Πληροφορίες</string>
     <string name="file_folder_already_exists_please_use_a_different_name">Το αρχείο/φάκελος υπάρχει ήδη! Παρακαλούμε χρησιμοποιήστε ένα διαφορετικό όνομα</string>
     <string name="import_from_device">Εισαγωγή από τη συσκευή</string>
@@ -68,7 +67,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">Απόκρυψη γραμμής κατάστασης</string>
     <string name="name">Όνομα</string>
     <string name="url_or_path">URL / Διαδρομή</string>
-    <string name="insert_link">Εισαγωγή συνδέσμου</string>
     <string name="insert_image">Εισαγωγή εικόνας</string>
     <string name="contributors">Συντελεστές</string>
     <string name="save_location">Αποθήκευση τοποθεσίας</string>
@@ -179,15 +177,13 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="asciidoc_special_key">Περιεχόμενο AsciiDoc</string>
     <string name="key_page_up">Σελίδα Επάνω (Page Up)</string>
     <string name="key_page_down">Σελίδα Κάτω (Page Down)</string>
-    <string name="move_text_one_line_up">Μετακίνηση κειμένου μία γραμμή πάνω</string>
-    <string name="move_text_one_line_down">Μετακίνηση κειμένου μία γραμμή κάτω</string>
-    <string name="start_new_line_below">Ξεκινήστε νέα γραμμή παρακάτω</string>
     <string name="key_pos_1">Έναρξη Γραμμής (Pos Home)</string>
     <string name="key_pos_end">Τέλος Γραμμής (Pos Τέλος)</string>
     <string name="key_pos_1_document">Έναρξη Εγγράφου</string>
     <string name="key_pos_end_document">Τέλος Εγγράφου</string>
     <string name="key_ctrl_a">Επιλογή όλων (Ctrl+A)</string>
     <string name="key_tab">Στηλοθέτης</string>
+    <string name="zero_width_space">Χώρος μηδενικού πλάτους</string>
     <string name="start_on_bottom">Έναρξη στο κάτω μέρος</string>
     <string name="start_on_bottom_when_loading_document">Μετά τη φόρτωση ενός εγγράφου, του δρομέα θέσης στο τέλος του</string>
     <string name="unordered_list_character">Χαρακτήρας για μη ταξινομημένη λίστα</string>
@@ -255,7 +251,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">Δεν υπάρχει εγκατεστημένη εφαρμογή ημερολογίου!</string>
     <string name="popular_documents">Δημοφιλή έγγραφα</string>
     <string name="color">Χρώμα</string>
-    <string name="zero_width_space">Χώρος μηδενικού πλάτους</string>
     <string name="basic_color_scheme">Σχέδιο βασικών χρωμάτων</string>
     <string name="background_foreground_color_in_editor_works_dark_light">Αλλάζει το χρώμα φόντου και προσκηνίου του επεξεργαστή κειμένου. Ρυθμίζει το θέμα της εφαρμογής και είναι διαθέσιμο σε ανοιχτό και σκούρο θέμα. Τα χρώματα επισήμανσης 
  παραμένουν τα ίδια.</string>
@@ -274,7 +269,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">Επιλέξτε ημερομηνία</string>
     <string name="pick_time">Επιλέξτε ώρα</string>
     <string name="get_format_instead_date_or_time">Χρήση μορφής αντί για ημερομηνία ή ώρα</string>
-    <string name="always_use_current_date_and_time">Να χρησιμοποιείται πάντα η τρέχουσα ημερομηνία &amp; ώρα</string>
     <string name="result">Αποτέλεσμα</string>
     <string name="just_time">Μόνο ώρα</string>
     <string name="just_date">Μόνο ημερομηνία</string>
@@ -316,7 +310,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="reload">Επαναφόρτωση</string>
     <string name="wrap_words">Αναδίπλωση λέξεων</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">Soft break if text doesn\'t fit to screen width. Else enable horizontal scrolling.</string>
-    <string name="recursive_search_in_current_directory">Αναδρομική αναζήτηση στον τρέχοντα κατάλογο.</string>
     <string name="always_open_with_this_app">Πάντα άνοιγμα με αυτήν την εφαρμογή</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">Πάντα να ανοίγετε αρχεία με αυτήν την εφαρμογή, όταν η λίστα περιέχει την επέκταση αρχείου. Χρησιμοποιήστε \'Κανένα, .html, . ss , .js\' για παράδειγμα, αν θέλετε να επεξεργαστείτε τα αρχεία web και αυτά χωρίς επέκταση αρχείου.</string>
     <string name="open_file_with">Άνοιγμα αρχείου με</string>

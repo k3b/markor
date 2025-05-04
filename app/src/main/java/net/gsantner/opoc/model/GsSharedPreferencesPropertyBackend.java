@@ -1,9 +1,9 @@
 /*#######################################################
  *
- * SPDX-FileCopyrightText: 2016-2023 Gregor Santner <gsantner AT mailbox DOT org>
+ * SPDX-FileCopyrightText: 2016-2025 Gregor Santner <gsantner AT mailbox DOT org>
  * SPDX-License-Identifier: Unlicense OR CC0-1.0
  *
- * Written 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ * Written 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  * To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 #########################################################*/
@@ -564,6 +564,14 @@ public class GsSharedPreferencesPropertyBackend implements GsPropertyBackend<Str
 
     public boolean contains(String key, final SharedPreferences... pref) {
         return gp(pref).contains(key);
+    }
+
+    public void remove(@StringRes int keyResourceId, final SharedPreferences... pref) {
+        gp(pref).edit().remove(rstr(keyResourceId)).apply();
+    }
+
+    public void remove(final String key, final SharedPreferences... pref) {
+        gp(pref).edit().remove(key).apply();
     }
 
     /**

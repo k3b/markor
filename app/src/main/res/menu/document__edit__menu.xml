@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
 /*#######################################################
  *
- *   Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -103,6 +103,31 @@
                 android:title="@string/font_size"
                 app:showAsAction="never" />
 
+            <!-- Text Case menu -->
+            <item
+                android:id="@+id/action_text_case"
+                android:icon="@drawable/ic_format_text_case_black_24dp"
+                android:title="@string/text_case"
+                app:showAsAction="never">
+                <menu>
+                    <item
+                        android:id="@+id/action_toggle_case"
+                        android:title="@string/toggle_case" />
+
+                    <item
+                        android:id="@+id/action_switch_case"
+                        android:title="@string/switch_case" />
+
+                    <item
+                        android:id="@+id/action_capitalize_words"
+                        android:title="@string/capitalize_words" />
+
+                    <item
+                        android:id="@+id/action_capitalize_sentences"
+                        android:title="@string/capitalize_sentences" />
+                </menu>
+            </item>
+
             <!-- Format menu -->
             <item
                 android:id="@+id/submenu_format_selection"
@@ -147,7 +172,7 @@
                             android:title="@string/embed_binary" />
                         <item
                             android:id="@string/action_format_orgmode"
-                            android:icon="@drawable/fountain_pen"
+                            android:icon="@drawable/ic_org_mode_file"
                             android:title="@string/orgmode" />
                     </group>
                 </menu>
@@ -162,8 +187,12 @@
         app:showAsAction="never">
         <menu>
             <item
+                android:id="@+id/action_share_path"
+                android:icon="@drawable/ic_link_black_24dp"
+                android:title="@string/url_or_path" />
+            <item
                 android:id="@+id/action_share_text"
-                android:icon="@drawable/ic_file_white_24dp"
+                android:icon="@drawable/ic_format_text_case_black_24dp"
                 android:title="@string/plaintext" />
             <item
                 android:id="@+id/action_share_pdf"
@@ -188,7 +217,7 @@
                 android:title="@string/image" />
             <item
                 android:id="@+id/action_share_screenshot"
-                android:icon="@drawable/ic_image_black_24dp"
+                android:icon="@drawable/ic_photo_camera_black_24dp"
                 android:title="@string/screenshot" />
             <item
                 android:id="@+id/action_share_calendar_event"
@@ -222,6 +251,11 @@
                 app:showAsAction="never" />
         </menu>
     </item>
+    <item
+        android:id="@+id/action_show_file_browser"
+        android:icon="@drawable/ic_folder_gray_24dp"
+        android:title="@string/file_browser"
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_info"
         android:icon="@drawable/ic_info_black_24dp"

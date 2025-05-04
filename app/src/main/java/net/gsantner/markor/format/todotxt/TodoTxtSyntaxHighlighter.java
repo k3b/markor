@@ -1,6 +1,6 @@
 /*#######################################################
  *
- *   Maintained 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -11,7 +11,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.text.style.LineBackgroundSpan;
 import android.text.style.LineHeightSpan;
-import android.text.style.UpdateLayout;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
@@ -45,9 +44,10 @@ public class TodoTxtSyntaxHighlighter extends TodoTxtBasicSyntaxHighlighter {
     }
 
     // Adds spacing and divider line between paragraphs
-    public static class ParagraphDividerSpan implements LineBackgroundSpan, LineHeightSpan, UpdateLayout {
+    public static class ParagraphDividerSpan implements LineBackgroundSpan, LineHeightSpan, StaticSpan {
         private final int _lineColor;
-        private Integer _origAscent = null;
+        private int _origAscent = 0;
+        private int _hash = 0;
 
         public ParagraphDividerSpan(@ColorInt int lineColor) {
             _lineColor = lineColor;
@@ -65,8 +65,9 @@ public class TodoTxtSyntaxHighlighter extends TodoTxtBasicSyntaxHighlighter {
 
         @Override
         public void chooseHeight(CharSequence text, int start, int end, int spanstartv, int v, Paint.FontMetricsInt fm) {
-            if (_origAscent == null) {
+            if (_hash != text.hashCode()) {
                 _origAscent = fm.ascent;
+                _hash = text.hashCode();
             }
             boolean isFirstLineInParagraph = start > 0 && text.charAt(start - 1) == '\n';
             fm.ascent = (isFirstLineInParagraph) ? (2 * _origAscent) : _origAscent;

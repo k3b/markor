@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">フォルダーを作成</string>
     <string name="create_new_document">新しいドキュメントを作成</string>
     <string name="move">移動</string>
-    <string name="copy">コピー</string>
     <string name="info">情報</string>
     <string name="file_folder_already_exists_please_use_a_different_name">ファイルまたはフォルダ名はすでに存在します。別の名前を使用してください。</string>
     <string name="import_from_device">デバイスからインポート</string>
@@ -68,7 +67,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">ステータスバーを非表示</string>
     <string name="name">名前</string>
     <string name="url_or_path">URL / パス</string>
-    <string name="insert_link">リンクを挿入</string>
     <string name="insert_image">画像を挿入</string>
     <string name="contributors">貢献者</string>
     <string name="save_location">保存場所</string>
@@ -177,15 +175,13 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="special_key">特殊キー</string>
     <string name="key_page_up">ページ上移動 (Page Up)</string>
     <string name="key_page_down">ページ下移動 (Page Down)</string>
-    <string name="move_text_one_line_up">テキストを１行上に移動</string>
-    <string name="move_text_one_line_down">テキストを１行下に移動</string>
-    <string name="start_new_line_below">以下の新しい行を開始します</string>
     <string name="key_pos_1">行の先頭 (Pos Home)</string>
     <string name="key_pos_end">行の末尾 (Pos End)</string>
     <string name="key_pos_1_document">ドキュメントの始め</string>
     <string name="key_pos_end_document">ドキュメントの終わり</string>
     <string name="key_ctrl_a">すべて選択 (Ctrl+A)</string>
     <string name="key_tab">タブ</string>
+    <string name="zero_width_space">ゼロ幅スペース</string>
     <string name="start_on_bottom">下部で開始</string>
     <string name="start_on_bottom_when_loading_document">ドキュメントの読み込み時に、カーソル位置は最後になります</string>
     <string name="unordered_list_character">順序なしリスト文字</string>
@@ -249,7 +245,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">カレンダーアプリがインストールされていません!</string>
     <string name="popular_documents">人気のあるドキュメント</string>
     <string name="color">色</string>
-    <string name="zero_width_space">ゼロ幅スペース</string>
     <string name="basic_color_scheme">基本的な配色</string>
     <string name="background_foreground_color_in_editor_works_dark_light">テキストエディターの背景と前景の色を変更します。アプリのテーマをライトとダークテーマで利用できるように調整します。構文の強調表示の色は変わりません。</string>
     <string name="preset">プリセット</string>
@@ -267,7 +262,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">日付を選択</string>
     <string name="pick_time">時間を選択</string>
     <string name="get_format_instead_date_or_time">日付や時間の代わりに形式を取得</string>
-    <string name="always_use_current_date_and_time">常に現在の日付と時間を使用する</string>
     <string name="result">結果</string>
     <string name="just_time">時間のみ</string>
     <string name="just_date">日付のみ</string>
@@ -309,7 +303,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="reload">再読み込み</string>
     <string name="wrap_words">単語の折り返し</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">テキストが画面幅に合わない場合に折り返します。 それ以外は、水平スクロールを有効にします。</string>
-    <string name="recursive_search_in_current_directory">現在のディレクトリの再帰的な検索。</string>
     <string name="always_open_with_this_app">いつもこのアプリで開く</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">リストにファイル拡張子が含まれている場合は、常にこのアプリでファイルを開きます。 たとえば、Webファイルやファイル拡張子のないファイルを編集したい場合は、 \'なし, .html, .css , .js\' を使用してください。</string>
     <string name="open_file_with">ファイルを開く</string>

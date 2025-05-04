@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">دروستکردنی فۆڵدەر</string>
     <string name="create_new_document">دروستکردنی بەڵگەنامەی نوێ</string>
     <string name="move">گواستنەوە</string>
-    <string name="copy">لەبەرگرتنەوە</string>
     <string name="info">زانیاری</string>
     <string name="file_folder_already_exists_please_use_a_different_name">فایل/فۆڵدەر بوونی هەیە! تکایە ناوێکی جیاواز بەکاربێنە</string>
     <string name="import_from_device">هێنان لە ئامێرەوە</string>
@@ -63,7 +62,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">شارنەوەی شریتی دۆخ</string>
     <string name="name">ناو</string>
     <string name="url_or_path">ناونیشان / شوێن</string>
-    <string name="insert_link">زیادکردنی بەستەر</string>
     <string name="insert_image">زیادکردنی وێنە</string>
     <string name="contributors">بەشداربووان</string>
     <string name="save_location">شوێنی پاراستن</string>
@@ -129,6 +127,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="general">گشتی</string>
     <string name="resources">سەرچاوەکان</string>
     <string name="line_spacing">مەودای نێوان</string>
+    <string name="zero_width_space">نیو بزوێن</string>
     <string name="unordered_list_char_dash">داش (-)</string>
     <string name="unordered_list_char_asterisk">ئەستێرە (*)</string>
     <string name="unordered_list_char_plus">زیادکردن (+)</string>
@@ -168,7 +167,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">بەرنامەی ساڵنامە دانەبەزێنراوە!</string>
     <string name="popular_documents">بەڵگەنامە گرنگەکان</string>
     <string name="color">ڕەنگ</string>
-    <string name="zero_width_space">نیو بزوێن</string>
     <string name="basic_color_scheme">ڕەنگی بنەڕەتی</string>
     <string name="preset">ڕێکخستنەوە</string>
     <string name="foreground">شاشەی لاوەکی</string>

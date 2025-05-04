@@ -1,9 +1,9 @@
 /*#######################################################
  *
- * SPDX-FileCopyrightText: 2018-2023 Gregor Santner <gsantner AT mailbox DOT org>
+ * SPDX-FileCopyrightText: 2018-2025 Gregor Santner <gsantner AT mailbox DOT org>
  * SPDX-License-Identifier: Unlicense OR CC0-1.0
  *
- * Written 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ * Written 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  * To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 #########################################################*/
@@ -18,6 +18,7 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Layout;
 import android.text.Selection;
+import android.text.Spannable;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -27,6 +28,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import net.gsantner.markor.util.TextCasingUtils;
 import net.gsantner.opoc.format.GsTextUtils;
 import net.gsantner.opoc.util.GsContextUtils;
 
@@ -37,37 +39,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
+import java.util.UUID;
 
-@SuppressWarnings({"CharsetObjectCanBeUsed", "WeakerAccess", "unused"})
-public final class TextViewUtils extends GsTextUtils {
+@SuppressWarnings({"WeakerAccess", "unused"})
+public final class TextViewUtils {
 
     // Suppress default constructor for noninstantiability
     private TextViewUtils() {
         throw new AssertionError();
     }
 
-    public static boolean isValidIndex(final CharSequence s, final int... indices) {
-        return s != null && inRange(0, s.length() - 1, indices);
-    }
-
-    // Checks if all values are in [min, max] _inclusive_
-    public static boolean inRange(final int min, final int max, final int... values) {
-        for (final int i : values) {
-            if (i < min || i > max) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public static int getLineStart(CharSequence s, int start) {
-        return getLineStart(s, start, 0);
-    }
-
-    public static int getLineStart(CharSequence s, int start, int minRange) {
-        int i = start;
-        if (isValidIndex(s, start - 1, minRange)) {
-            for (; i > minRange; i--) {
+    public static int getLineStart(final CharSequence s, final int sel) {
+        int i = sel;
+        if (GsTextUtils.isValidSelection(s, i)) {
+            for (; i > 0; i--) {
                 if (s.charAt(i - 1) == '\n') {
                     break;
                 }
@@ -77,14 +62,10 @@ public final class TextViewUtils extends GsTextUtils {
         return i;
     }
 
-    public static int getLineEnd(CharSequence s, int start) {
-        return getLineEnd(s, start, s.length());
-    }
-
-    public static int getLineEnd(CharSequence s, int start, int maxRange) {
-        int i = start;
-        if (isValidIndex(s, start, maxRange - 1)) {
-            for (; i < maxRange; i++) {
+    public static int getLineEnd(final CharSequence s, final int sel) {
+        int i = sel;
+        if (GsTextUtils.isValidSelection(s, i)) {
+            for (; i < s.length(); i++) {
                 if (s.charAt(i) == '\n') {
                     break;
                 }
@@ -94,22 +75,35 @@ public final class TextViewUtils extends GsTextUtils {
         return i;
     }
 
-    public static int getLastNonWhitespace(final CharSequence s, final int start) {
-        for (int i = Math.min(s.length() - 1, start); i >= 0; i--) {
-            char c = s.charAt(i);
-            if (c != ' ' && c != '\t') {
-                return i;
+    public static int getLastNonWhitespace(final CharSequence s) {
+        return getLastNonWhitespace(s, s.length() - 1);
+    }
+
+    public static int getLastNonWhitespace(final CharSequence s, final int end) {
+        if (s != null && end >= 0 && end < s.length()) {
+            for (int i = Math.min(s.length() - 1, end); i >= 0; i--) {
+                char c = s.charAt(i);
+                if (c != ' ' && c != '\t') {
+                    return i;
+                }
             }
         }
         return -1;
     }
 
+
+    public static int getFirstNonWhitespace(final CharSequence s) {
+        return getNextNonWhitespace(s, 0);
+    }
+
     public static int getNextNonWhitespace(final CharSequence s, final int start) {
-        final int length = s.length();
-        for (int i = Math.max(0, start); i < length; i++) {
-            char c = s.charAt(i);
-            if (c != ' ' && c != '\t') {
-                return i;
+        if (s != null && start >= 0) {
+            final int length = s.length();
+            for (int i = start; i < length; i++) {
+                char c = s.charAt(i);
+                if (c != ' ' && c != '\t') {
+                    return i;
+                }
             }
         }
         return -1;
@@ -121,19 +115,44 @@ public final class TextViewUtils extends GsTextUtils {
 
     // CharSequence must be an instance of _Spanned_
     public static int[] getSelection(final CharSequence text) {
+        if (text == null) {
+            return new int[]{-1, -1};
+        }
 
-        final int selectionStart = Selection.getSelectionStart(text);
-        final int selectionEnd = Selection.getSelectionEnd(text);
+        final int start = Selection.getSelectionStart(text);
+        final int end = Selection.getSelectionEnd(text);
 
-        if (selectionEnd >= selectionStart) {
-            return new int[]{selectionStart, selectionEnd};
+        if (end >= start) {
+            return new int[]{start, end};
         } else {
-            return new int[]{selectionEnd, selectionStart};
+            return new int[]{end, start};
+        }
+    }
+
+    public static CharSequence getSelectedText(final CharSequence text) {
+        final int[] sel = getSelection(text);
+        return (sel[0] >= 0 && sel[1] >= 0) ? text.subSequence(sel[0], sel[1]) : "";
+    }
+
+    public static CharSequence getSelectedText(final TextView text) {
+        return getSelectedText(text.getText());
+    }
+
+    public static void replaceSelection(final Editable text, final CharSequence replace) {
+        if (text != null && replace != null) {
+            final int[] sel = getSelection(text);
+            if (sel[0] >= 0 && sel[1] >= 0) {
+                text.replace(sel[0], sel[1], replace);
+            }
         }
     }
 
     public static int[] getLineSelection(final CharSequence text, final int[] sel) {
-        return sel != null && sel.length >= 2 ? new int[]{getLineStart(text, sel[0]), getLineEnd(text, sel[1])} : null;
+        return sel != null && sel.length >= 2 ? new int[]{getLineStart(text, sel[0]), getLineEnd(text, sel[1])} : new int[]{-1, -1};
+    }
+
+    public static int[] getLineSelection(final CharSequence text, final int sel) {
+        return getLineSelection(text, new int[]{sel, sel});
     }
 
     public static int[] getLineSelection(final TextView text) {
@@ -144,25 +163,67 @@ public final class TextViewUtils extends GsTextUtils {
         return getLineSelection(seq, getSelection(seq));
     }
 
+    /**
+     * Get lines of text in which sel[0] -> sel[1] is contained
+     **/
+    public static String getSelectedLines(final TextView text, final int... sel) {
+        return getSelectedLines(text.getText(), sel);
+    }
+
     public static String getSelectedLines(final CharSequence seq) {
-        final int[] sel = getLineSelection(seq);
-        return seq.subSequence(sel[0], sel[1]).toString();
+        return getSelectedLines(seq, getSelection(seq));
+    }
+
+    /**
+     * Get lines of text in which sel[0] -> sel[1] is contained
+     **/
+    public static String getSelectedLines(final CharSequence seq, final int... sel) {
+        if (sel != null && sel.length > 0 && GsTextUtils.isValidSelection(seq, sel)) {
+            final int start = sel[0], end = sel.length > 1 ? sel[1] : sel[0];
+            return seq.subSequence(getLineStart(seq, start), getLineEnd(seq, end)).toString();
+        } else {
+            return "";
+        }
     }
 
     /**
      * Convert a char index to a line index + offset from end of line
      *
-     * @param s text to parse
-     * @param p position in text
-     * @return int[2] where index 0 is line and index 1 is position from end of line
+     * @return int[n][2] where for each input, index 0 is line and index 1 is position from end of line
      */
-    public static int[] getLineOffsetFromIndex(final CharSequence s, int p) {
-        p = Math.min(Math.max(p, 0), s.length());
-        final int line = countChars(s, 0, p, '\n')[0];
-        final int offset = getLineEnd(s, p) - p;
+    public static int[][] getLineOffsetFromIndex(final CharSequence text, final int... sel) {
+        final int[][] offsets = new int[sel.length][2];
 
-        return new int[]{line, offset};
+        for (int i = 0; i < sel.length; i++) {
+            offsets[i] = new int[]{-1, -1};
+            final int p = sel[i];
+            if (p >= 0 && p <= text.length()) {
+                offsets[i][0] = GsTextUtils.countChars(text, 0, p, '\n')[0];
+                offsets[i][1] = getLineEnd(text, p) - p;
+            }
+        }
+
+        return offsets;
     }
+
+    public static void setSelectionFromOffsets(final TextView text, final int[][] offsets) {
+        setSelectionFromOffsets((Spannable) text.getText(), offsets);
+    }
+
+    public static void setSelectionFromOffsets(final Spannable text, final int[][] offsets) {
+        if (offsets != null && offsets.length >= 2 &&
+                offsets[0] != null && offsets[0].length == 2 &&
+                offsets[1] != null && offsets[1].length == 2 &&
+                text != null
+        ) {
+            final int start = getIndexFromLineOffset(text, offsets[0]);
+            final int end = getIndexFromLineOffset(text, offsets[1]);
+            if (GsTextUtils.isValidSelection(text, start, end)) {
+                Selection.setSelection(text, start, end);
+            }
+        }
+    }
+
 
     public static int getIndexFromLineOffset(final CharSequence s, final int[] le) {
         return getIndexFromLineOffset(s, le[0], le[1]);
@@ -177,6 +238,10 @@ public final class TextViewUtils extends GsTextUtils {
      * @return index in s
      */
     public static int getIndexFromLineOffset(final CharSequence s, final int l, final int e) {
+        if (l < 0 || e < 0) {
+            return -1;
+        }
+
         int i = 0, count = 0;
         if (s != null) {
             if (l > 0) {
@@ -199,61 +264,6 @@ public final class TextViewUtils extends GsTextUtils {
         return i;
     }
 
-    public static int[] countChars(final CharSequence s, final char... chars) {
-        return countChars(s, 0, s.length(), chars);
-    }
-
-    /**
-     * Count instances of chars between start and end
-     *
-     * @param s     Sequence to count in
-     * @param start start of section to count within
-     * @param end   end of section to count within
-     * @param chars Array of chars to count
-     * @return number of instances of each char in [start, end)
-     */
-    public static int[] countChars(final CharSequence s, int start, int end, final char... chars) {
-        // Faster specialization for the common single case
-        if (chars.length == 1) {
-            return new int[]{countChar(s, start, end, chars[0])};
-        }
-
-        final int[] counts = new int[chars.length];
-        start = Math.max(0, start);
-        end = Math.min(end, s.length());
-        for (int i = start; i < end; i++) {
-            final char c = s.charAt(i);
-            for (int j = 0; j < chars.length; j++) {
-                if (c == chars[j]) {
-                    counts[j]++;
-                }
-            }
-        }
-        return counts;
-    }
-
-    public static int countChar(final CharSequence s, final char c) {
-        return countChar(s, 0, s.length(), c);
-    }
-
-    /**
-     * Count instances of a single char in a charsequence
-     */
-    public static int countChar(final CharSequence s, int start, int end, final char c) {
-        start = Math.max(0, start);
-        end = Math.min(end, s.length());
-        int count = 0;
-        for (int i = start; i < end; i++) {
-            if (s.charAt(i) == c) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public static boolean isNewLine(CharSequence source, int start, int end) {
-        return isValidIndex(source, start, end - 1) && (source.charAt(start) == '\n' || source.charAt(end - 1) == '\n');
-    }
 
     public static void selectLines(final EditText edit, final Integer... positions) {
         selectLines(edit, Arrays.asList(positions));
@@ -273,8 +283,14 @@ public final class TextViewUtils extends GsTextUtils {
         }
         final CharSequence text = edit.getText();
         if (positions.size() == 1) { // Case 1 index
-            final int posn = TextViewUtils.getIndexFromLineOffset(text, positions.get(0), 0);
-            setSelectionAndShow(edit, posn);
+            final int pos = positions.get(0);
+            final int index;
+            if (pos >= 0) {
+                index = TextViewUtils.getIndexFromLineOffset(text, positions.get(0), 0);
+            } else {
+                index = edit.length();
+            }
+            setSelectionAndShow(edit, index);
         } else if (positions.size() > 1) {
             final TreeSet<Integer> pSet = new TreeSet<>(positions);
             final int selStart, selEnd;
@@ -313,34 +329,27 @@ public final class TextViewUtils extends GsTextUtils {
 
         final int _start = Math.min(start, end);
         final int _end = Math.max(start, end);
-        if (start < 0 || end > text.length()) {
+        if (_start < 0 || _end > text.length()) {
             return;
         }
         final int lineStart = TextViewUtils.getLineStart(text.getText(), _start);
 
         final Rect viewSize = new Rect();
-        if (!text.getLocalVisibleRect(viewSize)) {
-            return;
-        }
+        text.getLocalVisibleRect(viewSize);
 
         // Region in Y
         // ------------------------------------------------------------
-        final int selStartLine = layout.getLineForOffset(_start);
-        final int lineStartLine = layout.getLineForOffset(lineStart);
-        final int selStartLineTop = layout.getLineTop(selStartLine);
-        final int lineStartLineTop = layout.getLineTop(lineStartLine);
+        final int startLine = layout.getLineForOffset(lineStart);
+        final int startLineTop = layout.getLineTop(startLine);
+
+        final int endLine = layout.getLineForOffset(_end);
+        final int endLineBottom = layout.getLineBottom(endLine);
+        final int endLineTop = layout.getLineTop(endLine);
+        final int lineHeight = endLineBottom - endLineTop;
 
         final Rect region = new Rect();
-
-        if ((selStartLine - lineStartLine) <= 3) {
-            // good to see the start of the line if close enough
-            region.top = lineStartLineTop;
-        } else {
-            region.top = selStartLineTop;
-        }
-
-        // Push the top to the top
-        region.bottom = region.top + viewSize.height();
+        region.top = Math.max(startLineTop, endLineBottom - viewSize.height() + lineHeight);
+        region.bottom = endLineBottom;
 
         // Region in X - as handling RTL, text alignment, and centred text etc is
         // a huge pain (see TextView.bringPointIntoView), we use a very simple solution.
@@ -348,11 +357,10 @@ public final class TextViewUtils extends GsTextUtils {
         final int startLeft = (int) layout.getPrimaryHorizontal(_start);
         final int halfWidth = viewSize.width() / 2;
         // Push the start to the middle of the screen
-        region.left = startLeft - halfWidth;
-        region.right = startLeft + halfWidth;
+        region.left = Math.max(startLeft - halfWidth, 0);
+        region.right = Math.min(startLeft + halfWidth, text.getWidth());
 
-        // Call in post to try to make sure we run after any pending actions
-        text.post(() -> text.requestRectangleOnScreen(region));
+        text.requestRectangleOnScreen(region, true);
     }
 
     public static void setSelectionAndShow(final EditText edit, final int... sel) {
@@ -363,27 +371,57 @@ public final class TextViewUtils extends GsTextUtils {
         final int start = sel[0];
         final int end = sel.length > 1 ? sel[1] : start;
 
-        if (inRange(0, edit.length(), start, end)) {
-            edit.post(() -> {
-                if (!edit.hasFocus()) {
-                    edit.requestFocus();
-                }
+        if (GsTextUtils.inRange(0, edit.length(), start, end)) {
+            if (!edit.hasFocus() && edit.getVisibility() != View.GONE) {
+                edit.requestFocus();
+            }
 
-                edit.setSelection(start, end);
-                edit.post(() -> showSelection(edit, start, end));
-            });
+            edit.setSelection(start, end);
+            showSelection(edit, start, end);
         }
+    }
+
+    /**
+     * Snippets are evaluated in the following order:
+     * 1. {{*}} style placeholders are replaced (except {{cursor}})
+     * 2. Time formats within backticks are interpolated
+     * 3. {{cursor}} tokens are replaced with HighlightingEditor.PLACE_CURSOR_HERE_TOKEN
+     *
+     * @param text         Text to be interpolated
+     * @param title        Title of note (for {{title}})
+     * @param selectedText Currently selected text
+     */
+    public static String interpolateSnippet(String text, final CharSequence title, final CharSequence selectedText) {
+        final long current = System.currentTimeMillis();
+        final String time = GsContextUtils.instance.formatDateTime((Locale) null, "HH:mm", current);
+        final String date = GsContextUtils.instance.formatDateTime((Locale) null, "yyyy-MM-dd", current);
+        final String weekday = GsContextUtils.instance.formatDateTime((Locale) null, "EEEE", current);
+
+        // Replace placeholders
+        text = text
+                .replace("{{time}}", time)
+                .replace("{{date}}", date)
+                .replace("{{title}}", title)
+                .replace("{{weekday}}", weekday)
+                .replace("{{sel}}", selectedText)
+                .replace("{{cursor}}", HighlightingEditor.PLACE_CURSOR_HERE_TOKEN);
+
+        while (text.contains("{{uuid}}")) {
+            text = text.replaceFirst("\\{\\{uuid\\}\\}", UUID.randomUUID().toString());
+        }
+
+        return interpolateEscapedDateTime(text);
     }
 
     // Search for matching pairs of backticks
     // interpolate contents of backtick pair as SimpleDateFormat
-    public static String interpolateEscapedDateTime(final String snip) {
+    public static String interpolateEscapedDateTime(final String text) {
         final StringBuilder interpolated = new StringBuilder();
         final StringBuilder temp = new StringBuilder();
         boolean isEscaped = false;
         boolean inDate = false;
-        for (int i = 0; i < snip.length(); i++) {
-            final char c = snip.charAt(i);
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
             if (c == '\\' && !isEscaped) {
                 isEscaped = true;
             } else if (isEscaped) {
@@ -705,15 +743,6 @@ public final class TextViewUtils extends GsTextUtils {
         return new String(buf);
     }
 
-    // Check if a range is valid
-    public static boolean checkRange(final CharSequence seq, final int... indices) {
-        return checkRange(seq.length(), indices);
-    }
-
-    public static boolean checkRange(final int length, final int... indices) {
-        return indices != null && indices.length >= 2 && inRange(0, length, indices) && indices[1] > indices[0];
-    }
-
     public static boolean isViewVisible(final View view) {
         if (view == null || !view.isShown()) {
             return false;
@@ -728,8 +757,41 @@ public final class TextViewUtils extends GsTextUtils {
     // Check if keyboard open. Only available after android 11 :(
     public static Boolean isImeOpen(final View view) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return view.getRootWindowInsets().isVisible(WindowInsets.Type.ime());
+            final WindowInsets insets = view.getRootWindowInsets();
+            if (insets != null) {
+                return insets.isVisible(WindowInsets.Type.ime());
+            }
         }
         return null; // Uncertain
+    }
+
+    // Text-Casing
+    // ---------------------------------------------------------------------------------------------
+    public static void toggleSelectionCase(final Editable edit) {
+        final String text = getSelectedText(edit).toString();
+        if (!text.isEmpty()) {
+            replaceSelection(edit, TextCasingUtils.toggleCase(text));
+        }
+    }
+
+    public static void switchSelectionCase(final Editable edit) {
+        final String text = getSelectedText(edit).toString();
+        if (!text.isEmpty()) {
+            replaceSelection(edit, TextCasingUtils.switchCase(text));
+        }
+    }
+
+    public static void capitalizeSelectionWords(final Editable edit) {
+        final String text = getSelectedText(edit).toString();
+        if (!text.isEmpty()) {
+            replaceSelection(edit, TextCasingUtils.capitalizeWords(text));
+        }
+    }
+
+    public static void capitalizeSelectionSentences(final Editable edit) {
+        final String text = getSelectedText(edit).toString();
+        if (!text.isEmpty()) {
+            replaceSelection(edit, TextCasingUtils.capitalizeSentences(text));
+        }
     }
 }

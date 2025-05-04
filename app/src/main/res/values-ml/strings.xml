@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -64,7 +64,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="items_selected_witharg" tools:ignore="PluralsCandidate">%d എണ്ണം തിരഞ്ഞെടുത്തിരിക്കുന്നു</string>
     <string name="hide_statusbar">സ്റ്റാറ്റസ്ബാർ മറയ്ക്കുക</string>
     <string name="name">പേര്</string>
-    <string name="insert_link">ലിങ്ക് ചേർക്കുക</string>
     <string name="insert_image">ചിത്രം ചേർക്കുക</string>
     <string name="contributors">സംഭാവകർ</string>
     <string name="save_location">സേവ് ചെയ്യേണ്ട സ്ഥലം</string>
@@ -147,6 +146,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">പ്രോജക്ടു് ലൈസൻസ്</string>
     <string name="contribute_code_to_this_project_anybody_welcome">പ്രോജക്റ്റിലേക്ക് കോഡ് സംഭാവന ചെയ്യുക. തുടക്കക്കാരെ ഉൾപ്പെടെ എല്ലാവരെയും സ്വാഗതം ചെയ്യുന്നു</string>
     <string name="project_team">പ്രോജക്റ്റ് ടീം</string>
+    <string name="community">കമ്മ്യൂണിറ്റി</string>
     <string name="contributors_public_add_yourself_description">സംഭാവക വിവരം കാണിക്കുക. സംഭാവന ചെയ്തതിനുശേഷം ഒരു ഓപ്റ്റ്-ഇൻ അടിസ്ഥാനത്തിൽ ഇത് ഇവിടെ കാണിക്കുന്നതിന് നൽകുക</string>
     <string name="error_picture_selection">ചിത്രം തിരഞ്ഞെടുക്കുകയോ സംരക്ഷിക്കുകയോ ചെയ്തിട്ടില്ല.</string>
     <string name="edit_picture">ചിത്രം എഡിറ്റുചെയ്യുക</string>

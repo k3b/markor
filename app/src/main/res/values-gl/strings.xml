@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Crear cartafol</string>
     <string name="create_new_document">Crear un novo Documento</string>
     <string name="move">Mover</string>
-    <string name="copy">Copiar</string>
     <string name="info">Información</string>
     <string name="import_from_device">Importar dun dispositivo</string>
     <string name="import_">Importar</string>
@@ -65,7 +64,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">Agochar barra de estado</string>
     <string name="name">Nome</string>
     <string name="url_or_path">URL / Ruta</string>
-    <string name="insert_link">Inserir ligazón</string>
     <string name="insert_image">Inserir imaxe</string>
     <string name="contributors">Contribúen</string>
     <string name="select_storage_folder">Seleccionar cartafol de almacenamento</string>
@@ -119,6 +117,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">Licencia de proxecto</string>
     <string name="contribute_code_to_this_project_anybody_welcome">Contribuír código ao proxecto. Todo o mundo é benvido para facelo, incluídos os recén chegados</string>
     <string name="project_team">Equipo de proxecto</string>
+    <string name="community">Comunidade</string>
     <string name="contributors_public_add_yourself_description">Amosar información do colaborador. Proporcione que se mostre aquí de xeito opt-in despois de contribuír</string>
     <string name="error_picture_selection">Non hai ningunha imaxe seleccionada, tomada ou gardada.</string>
     <string name="edit_picture">Editar imaxe</string>

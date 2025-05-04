@@ -29,7 +29,6 @@ public class TodoTxtFilter {
 
     // Special query keywords
     // ----------------------------------------------------------------------------------------
-
     public final static String QUERY_PRIORITY_ANY = "pri";
     public final static String QUERY_DUE_TODAY = "due=";
     public final static String QUERY_DUE_OVERDUE = "due<";
@@ -38,13 +37,11 @@ public class TodoTxtFilter {
     public final static String QUERY_DONE = "done";
 
     // ----------------------------------------------------------------------------------------
-
     public static final String SAVED_TODO_VIEWS = "todo_txt__saved_todo_views";
     public static final String STRING_NONE = "-";
     private static final String TITLE = "TITLE";
     private static final String QUERY = "QUERY";
     private static final String NULL_SENTINEL = "NULL SENTINEL";
-
 
     public static final int MAX_RECENT_VIEWS = 10;
 
@@ -81,8 +78,10 @@ public class TodoTxtFilter {
     private static List<SttFilterKey> getStringListKeys(final List<TodoTxtTask> tasks, final GsCallback.r1<List<String>, TodoTxtTask> keyGetter) {
         final List<String> all = new ArrayList<>();
         for (final TodoTxtTask task : tasks) {
-            final List<String> tKeys = keyGetter.callback(task);
-            all.addAll(tKeys == null || tKeys.isEmpty() ? Collections.singletonList(NULL_SENTINEL) : tKeys);
+            if (!task.isDone()) {
+                final List<String> tKeys = keyGetter.callback(task);
+                all.addAll(tKeys == null || tKeys.isEmpty() ? Collections.singletonList(NULL_SENTINEL) : tKeys);
+            }
         }
 
         final List<SttFilterKey> keys = new ArrayList<>();
@@ -111,7 +110,7 @@ public class TodoTxtFilter {
         return keys;
     }
 
-    // Convert a set of querty keys into a formatted query
+    // Convert a set of query keys into a formatted query
     public static String makeQuery(final Collection<String> keys, final boolean isAnd, final TodoTxtFilter.TYPE type) {
         final String prefix;
         final String nullKey;
@@ -289,7 +288,8 @@ public class TodoTxtFilter {
         } else if (element.startsWith("+")) {
             result = task.getProjects().contains(element.substring(1));
         } else {
-            result = false;
+            // Default to string match
+            result = task.getLine().toLowerCase().contains(element.toLowerCase());
         }
 
         return result ? 'T' : 'F';

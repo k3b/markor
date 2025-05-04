@@ -1,6 +1,6 @@
 [![GitHub releases](https://img.shields.io/github/tag/gsantner/markor.svg)](https://github.com/gsantner/markor/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/gsantner/markor/total.svg?logo=github&logoColor=lime)](https://github.com/gsantner/markor/releases)
-[![Translate on Crowdin](https://img.shields.io/badge/translate-crowdin-green.svg)](https://crowdin.com/project/markor/invite)
+[![Translate on Crowdin](https://img.shields.io/badge/translate-crowdin-green.svg)](https://crowdin.com/project/markor)
 [![Community Discussion](https://img.shields.io/badge/chat-community-blue.svg)](https://github.com/gsantner/markor/discussions)
 [![GitHub CI](https://github.com/gsantner/markor/workflows/CI/badge.svg)](https://github.com/gsantner/markor/actions)
 
@@ -87,7 +87,6 @@ There is no dedicated view mode implemented.
 * [**FAQ**](README.md#FAQ)
   * [File browser, file management](README.md#file-browser--file-management)
   * [Format: Markdown](README.md#format-markdown)
-  * [Format: Markdown](README.md#format-markdown)
   * [Format: todo.txt](README.md#format-todotxt)
 * [**More**](doc)
   * [Synced plaintext TODO and notes - Vim / Vimwiki, Markor Android, Syncthing, GTD (Pitt)](doc/2020-09-26-vimwiki-sync-plaintext-to-do-and-notes-todotxt-markdown.md)
@@ -126,7 +125,7 @@ There is no dedicated view mode implemented.
 * **Bug reports**  
   Report issues [here](https://github.com/gsantner/markor/issues). Please [search](https://github.com/gsantner/markor/issues?q=) for similar issues & [requests](https://github.com/gsantner/markor/discussions?discussions_q=) first. If it's not a bug, please head to discussions.
 * **Localization**  
-  Translate on [Crowdin](https://crowdin.com/project/markor/invite) (free).
+  Translate on [Crowdin](https://crowdin.com/project/markor) (free).
 
 ## Develop
 Clone the project using git. Then open the project in [Android Studio](https://developer.android.com/studio) (recommended), install required Android SDK dependencies where required.
@@ -256,7 +255,8 @@ Todo.txt is a simple text format for todo. Each line of text is a task. The idea
 | [User Documentation](https://github.com/todotxt/todo.txt-cli/wiki/User-Documentation) | User documentation   |
 
 
-![todotxt](doc/assets/todotxt-format.png)
+![todotxt](doc/assets/todotxt-format-dark.png#gh-dark-mode-only)
+![todotxt](doc/assets/todotxt-format.png#gh-light-mode-only)
 
 #### How to mark a task done?
 Done tasks are marked by a `x ` in begining of the line and can optionally be moved to a done/archive file.

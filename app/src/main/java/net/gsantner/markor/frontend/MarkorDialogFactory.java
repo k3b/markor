@@ -1,6 +1,6 @@
 /*#######################################################
  *
- *   Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -18,6 +18,7 @@ import static net.gsantner.markor.format.todotxt.TodoTxtTask.SttTaskSimpleCompar
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.os.Build;
 import android.text.Editable;
 import android.text.Html;
@@ -25,18 +26,21 @@ import android.text.InputType;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.util.Pair;
-import android.view.Gravity;
 import android.view.WindowManager;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 
 import net.gsantner.markor.ApplicationObject;
 import net.gsantner.markor.R;
-import net.gsantner.markor.format.FormatRegistry;
+import net.gsantner.markor.activity.DocumentActivity;
+import net.gsantner.markor.format.ActionButtonBase;
 import net.gsantner.markor.format.todotxt.TodoTxtBasicSyntaxHighlighter;
 import net.gsantner.markor.format.todotxt.TodoTxtFilter;
 import net.gsantner.markor.format.todotxt.TodoTxtTask;
@@ -59,34 +63,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class MarkorDialogFactory {
     public static AppSettings as() {
         return ApplicationObject.settings();
     }
 
-    public static void showSpecialKeyDialog(Activity activity, GsCallback.a1<String> callback) {
-        DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+    public static void showSpecialKeyDialog(Activity activity, GsSearchOrCustomTextDialog.DialogState state, GsCallback.a1<String> callback) {
+        final DialogOptions dopt = baseConf(activity);
         dopt.callback = callback;
         String[] actions = activity.getResources().getStringArray(R.array.textactions_press_key__text);
         dopt.data = new ArrayList<>(Arrays.asList(actions));
-
         dopt.dialogHeightDp = 530;
         dopt.titleText = R.string.special_key;
         dopt.isSearchEnabled = false;
         dopt.okButtonText = 0;
+        dopt.state.copyFrom(state);
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
     public static void showAsciidocSpecialKeyDialog(Activity activity, GsCallback.a1<String> callback) {
-        GsSearchOrCustomTextDialog.DialogOptions dopt = new GsSearchOrCustomTextDialog.DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.callback = callback;
         // this is the only difference to showSpecialKeyDialog:
         // R.array.asciidoc_textactions_press_key__text is used instead of R.array.textactions_press_key__text
@@ -101,7 +107,7 @@ public class MarkorDialogFactory {
     }
 
     public static void showInsertTableRowDialog(final Activity activity, final boolean isHeader, GsCallback.a2<Integer, Boolean> callback) {
-        final DialogOptions dopt = new DialogOptions();
+        final DialogOptions dopt = baseConf(activity);
         final String PREF_LAST_USED_TABLE_SIZE = "pref_key_last_used_table_size";
         final int lastUsedTableSize = as().getInt(PREF_LAST_USED_TABLE_SIZE, 3);
         final List<String> availableData = new ArrayList<>();
@@ -109,17 +115,21 @@ public class MarkorDialogFactory {
             availableData.add(Integer.toString(i));
         }
 
-        baseConf(activity, dopt);
         dopt.titleText = R.string.table;
-        dopt.messageText = activity.getString(R.string.how_much_columns_press_table_button_long_to_start_table);
+        dopt.messageText = activity.getString(R.string.how_much_columns_press_table_button_long_to_start_table) + "\n";
         dopt.messageText += activity.getString(R.string.example_of_a_markdown_table) + ":\n\n";
-        dopt.messageText += "| id | name | info |\n|-----|-----------|--------|\n| 1  | John   | text |\n| 2  | Anna   | text |\n";
+        dopt.messageText += "" +
+                "| id | name | info |\n" +
+                "|----| ---- | ---- |\n" +
+                "| 1  | John | text |\n" +
+                "| 2  | Anna | text |";
 
         dopt.callback = colsStr -> {
             as().setInt(PREF_LAST_USED_TABLE_SIZE, Integer.parseInt(colsStr));
             callback.callback(Integer.parseInt(colsStr), isHeader);
         };
         dopt.data = availableData;
+        dopt.isSoftInputVisible = false;
         dopt.searchInputType = InputType.TYPE_CLASS_NUMBER;
         dopt.highlightData = Collections.singletonList(Integer.toString(lastUsedTableSize));
         dopt.searchHintText = R.string.search_or_custom;
@@ -129,25 +139,23 @@ public class MarkorDialogFactory {
     public static void showSearchFilesDialog(
             final Activity activity,
             final File searchDir,
-            final GsCallback.a3<String, Integer, Boolean> callback
+            final GsCallback.a3<File, Integer, Boolean> callback
     ) {
         if (activity == null || searchDir == null || !searchDir.canRead()) {
             return;
         }
 
         if (!FileSearchEngine.isSearchExecuting.get()) {
-            GsCallback.a1<FileSearchEngine.SearchOptions> fileSearchDialogCallback = (searchOptions) -> {
+            FileSearchDialog.showDialog(activity, searchOptions -> {
                 searchOptions.rootSearchDir = searchDir;
-                FileSearchEngine.queueFileSearch(activity, searchOptions, (searchResults) ->
+                FileSearchEngine.queueFileSearch(activity, searchOptions, searchResults ->
                         FileSearchResultSelectorDialog.showDialog(activity, searchResults, callback));
-            };
-            FileSearchDialog.showDialog(activity, fileSearchDialogCallback);
+            });
         }
     }
 
     public static void showSttArchiveDialog(final Activity activity, final String lastName, final GsCallback.a1<String> callback) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.callback = callback;
         final List<String> highlightedData = new ArrayList<>();
         final List<String> availableData = new ArrayList<>();
@@ -160,19 +168,19 @@ public class MarkorDialogFactory {
             if (!availableData.contains(lastName)) {
                 availableData.add(lastName);
             }
-            dopt.defaultText = lastName;
+            dopt.state.searchText = lastName;
         }
 
         dopt.data = availableData;
         dopt.highlightData = highlightedData;
         dopt.searchHintText = R.string.search_or_custom;
         dopt.messageText = activity.getString(R.string.archive_does_move_done_tasks);
+        dopt.isSoftInputVisible = false;
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
     public static void showSttSortDialogue(Activity activity, final GsCallback.a2<String, Boolean> callback) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         final List<String> availableData = new ArrayList<>();
         final List<Integer> availableDataToIconMap = new ArrayList<>();
 
@@ -218,8 +226,6 @@ public class MarkorDialogFactory {
         dopt.data = availableData;
         dopt.highlightData = Collections.singletonList(as().getString(optLastSelected, o_context + d_desc));
         dopt.iconsForData = availableDataToIconMap;
-        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
-        dopt.dialogHeightDp = 530;
         dopt.okButtonText = 0;
 
         dopt.titleText = R.string.sort_tasks_by_selected_order;
@@ -230,8 +236,7 @@ public class MarkorDialogFactory {
     }
 
     public static void showSttFilteringDialog(final Activity activity, final EditText text) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
 
         final List<String> options = new ArrayList<>();
         final List<Integer> icons = new ArrayList<>();
@@ -260,7 +265,7 @@ public class MarkorDialogFactory {
             dopt2.titleText = R.string.advanced_filtering;
             dopt2.messageText = Html.fromHtml(activity.getString(R.string.advanced_filtering_help));
             final String[] queryHolder = new String[1];
-            dopt2.searchFunction = (query, line) -> {
+            dopt2.searchFunction = (query, line, index) -> {
                 queryHolder[0] = query.toString();
                 return TodoTxtFilter.isMatchQuery(new TodoTxtTask(line), query);
             };
@@ -278,23 +283,19 @@ public class MarkorDialogFactory {
             final String title = savedViews.get(i).first;
             final String query = savedViews.get(i).second;
             options.add(title);
+            icons.add(R.drawable.empty_blank);
             callbacks.add(() -> {
                 final DialogOptions doptView = makeSttLineSelectionDialog(activity, text, t -> TodoTxtFilter.isMatchQuery(t, query));
                 setQueryTitle(doptView, title, query);
 
                 // Delete view
                 doptView.neutralButtonText = R.string.delete;
+                doptView.isSoftInputVisible = false;
                 doptView.neutralButtonCallback = viewDialog -> {
-                    final DialogOptions confirmDopt = new DialogOptions();
-                    baseConf(activity, confirmDopt);
-                    confirmDopt.titleText = R.string.confirm_delete;
-                    confirmDopt.messageText = title;
-                    confirmDopt.isSearchEnabled = false;
-                    confirmDopt.callback = (s) -> {
+                    showConfirmDialog(activity, R.string.confirm_delete, title, null, () -> {
                         viewDialog.dismiss();
                         TodoTxtFilter.deleteFilterIndex(activity, i);
-                    };
-                    GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, confirmDopt);
+                    });
                 };
 
                 GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, doptView);
@@ -306,7 +307,6 @@ public class MarkorDialogFactory {
         dopt.positionCallback = (posn) -> callbacks.get(posn.get(0)).callback();
         dopt.isSearchEnabled = false;
         dopt.titleText = R.string.browse_todo;
-        dopt.dialogWidthDp = WindowManager.LayoutParams.MATCH_PARENT;
 
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
@@ -332,9 +332,7 @@ public class MarkorDialogFactory {
             final boolean enableAnd,
             final TodoTxtFilter.TYPE queryType
     ) {
-
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
 
         // Populate options
         // -------------------------------------
@@ -375,7 +373,7 @@ public class MarkorDialogFactory {
         dopt.titleText = title;
         dopt.isSearchEnabled = enableSearch;
         dopt.searchHintText = R.string.search;
-        dopt.isMultiSelectEnabled = true;
+        dopt.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
 
         // Callback to actually show tasks
         // -------------------------------------
@@ -411,8 +409,7 @@ public class MarkorDialogFactory {
         dopt.neutralButtonCallback = (dialog) -> {
             final String query = getQuery.callback();
             // Get save name
-            final DialogOptions doptSave = new DialogOptions();
-            baseConf(activity, doptSave);
+            final DialogOptions doptSave = baseConf(activity);
             doptSave.titleText = R.string.name;
             doptSave.searchHintText = R.string.empty_string;
             doptSave.callback = saveTitle -> {
@@ -438,8 +435,7 @@ public class MarkorDialogFactory {
             final EditText text,
             final GsCallback.b1<TodoTxtTask> filter
     ) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         final List<TodoTxtTask> allTasks = TodoTxtTask.getAllTasks(text.getText());
         final List<String> lines = new ArrayList<>();
         final List<Integer> lineIndices = new ArrayList<>();
@@ -451,8 +447,8 @@ public class MarkorDialogFactory {
         }
         dopt.data = lines;
         dopt.titleText = R.string.search;
-        dopt.extraFilter = "[^\\s]+"; // Line must have one or more non-whitespace to display
-        dopt.isMultiSelectEnabled = true;
+        dopt.dataFilter = "[^\\s]+"; // Line must have one or more non-whitespace to display
+        dopt.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
         dopt.highlighter = as().isHighlightingEnabled() ? getSttHighlighter() : null;
         dopt.positionCallback = (posns) -> {
             final List<Integer> selIndices = new ArrayList<>();
@@ -481,13 +477,12 @@ public class MarkorDialogFactory {
      * Allow to choose between Hexcolor / foreground / background color, pass back stringid
      */
     public static void showColorSelectionModeDialog(Activity activity, GsCallback.a1<Integer> callback) {
-        DialogOptions dopt = new DialogOptions();
+        final DialogOptions dopt = baseConf(activity);
 
         final String hexcode = activity.getString(R.string.hexcode);
         final String fg = activity.getString(R.string.foreground);
         final String bg = activity.getString(R.string.background);
 
-        baseConf(activity, dopt);
         dopt.callback = arg1 -> {
             int id = R.string.hexcode;
             if (fg.equals(arg1)) {
@@ -506,24 +501,217 @@ public class MarkorDialogFactory {
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
+    /**
+     * Shows all checkboxes in the file in a muti select dialog.
+     * The multi select can be used to check or uncheck them.
+     * <p>
+     * Long pressing a line will jump to the line in the file.
+     */
+    public static void showDocumentChecklistDialog(
+            final Activity activity,
+            final Editable text,
+            final Pattern checkPattern,
+            final int checkGroup,
+            final String checkedChars,
+            final String uncheckedChars,
+            final @Nullable GsCallback.a1<Integer> showCallback
+    ) {
+        final List<String> lines = new ArrayList<>();    // String of each line
+        final Set<Integer> checked = new HashSet<>();    // Whether the line is checked
+        final List<Integer> indices = new ArrayList<>(); // Indices of the check char in the line
+        final Matcher matcher = checkPattern.matcher("");
+
+        GsTextUtils.forEachline(text, (index, start, end) -> {
+            final String line = text.subSequence(start, end).toString();
+            matcher.reset(line);
+            if (matcher.find()) {
+                final int cs = matcher.start(checkGroup);
+                final char c = line.charAt(cs);
+                if (checkedChars.indexOf(c) >= 0) {
+                    checked.add(lines.size());
+                }
+                lines.add(line);
+                indices.add(cs + start);
+            }
+            return true;
+        });
+
+        final DialogOptions dopt = baseConf(activity);
+        dopt.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
+        dopt.data = lines;
+        dopt.preSelected = checked;
+        dopt.titleText = R.string.check_list;
+
+        final String check = Character.toString(checkedChars.charAt(0));
+        final String uncheck = Character.toString(uncheckedChars.charAt(0));
+        final TextViewUtils.ChunkedEditable chunked = TextViewUtils.ChunkedEditable.wrap(text);
+
+        dopt.positionCallback = (result) -> {
+            // Result has the indices of the checker lines which are selected
+            for (final int i : GsCollectionUtils.setDiff(checked, result)) {
+                final int cs = indices.get(i);
+                chunked.replace(cs, cs + 1, uncheck);
+            }
+
+            for (final int i : GsCollectionUtils.setDiff(result, checked)) {
+                final int cs = indices.get(i);
+                chunked.replace(cs, cs + 1, check);
+            }
+
+            chunked.applyChanges();
+        };
+
+        if (showCallback != null) {
+            dopt.callback = (line) -> {
+                final int index = lines.indexOf(line);
+                if (index >= 0) {
+                    final int cs = indices.get(index);
+                    final int end = TextViewUtils.getLineEnd(text, cs);
+                    showCallback.callback(end);
+                }
+            };
+        }
+
+        GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+    }
+
     // Insert items
     public static void showInsertItemsDialog(
             final Activity activity,
-            final @StringRes int title,
-            final List<String> data,
-            final GsCallback.a1<String> insertCallback
+            final Editable text,
+            final Pattern checkPattern,
+            final int checkGroup,
+            final String checkedChars,
+            final String uncheckedChars,
+            final @Nullable GsCallback.a1<Integer> showCallback
     ) {
-        GsSearchOrCustomTextDialog.DialogOptions dopt = new GsSearchOrCustomTextDialog.DialogOptions();
-        baseConf(activity, dopt);
-        dopt.data = new ArrayList<>(new TreeSet<>(data));
-        dopt.callback = insertCallback;
-        dopt.titleText = title;
-        dopt.searchHintText = R.string.search_or_custom;
-        dopt.isMultiSelectEnabled = true;
-        dopt.positionCallback = (result) -> {
-            for (final Integer pi : result) {
-                insertCallback.callback(dopt.data.get(pi).toString());
+        final List<String> lines = new ArrayList<>();    // String of each line
+        final Set<Integer> checked = new HashSet<>();    // Whether the line is checked
+        final List<Integer> indices = new ArrayList<>(); // Indices of the check char in the line
+        final Matcher matcher = checkPattern.matcher("");
+        GsTextUtils.forEachline(text, (index, start, end) -> {
+            final String line = text.subSequence(start, end).toString();
+            matcher.reset(line);
+            if (matcher.find()) {
+                final int cs = matcher.start(checkGroup);
+                final char c = line.charAt(cs);
+                if (checkedChars.indexOf(c) >= 0) {
+                    checked.add(lines.size());
+                }
+                lines.add(line);
+                indices.add(cs + start);
             }
+            return true;
+        });
+
+        final DialogOptions dopt = baseConf(activity);
+        dopt.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
+        dopt.data = lines;
+        dopt.preSelected = checked;
+        dopt.titleText = R.string.check_list;
+
+        final String check = Character.toString(checkedChars.charAt(0));
+        final String uncheck = Character.toString(uncheckedChars.charAt(0));
+        final TextViewUtils.ChunkedEditable chunked = TextViewUtils.ChunkedEditable.wrap(text);
+
+        dopt.positionCallback = (result) -> {
+            // Result has the indices of the checker lines which are selected
+            for (final int i : GsCollectionUtils.setDiff(checked, result)) {
+                final int cs = indices.get(i);
+                chunked.replace(cs, cs + 1, uncheck);
+            }
+
+            for (final int i : GsCollectionUtils.setDiff(result, checked)) {
+                final int cs = indices.get(i);
+                chunked.replace(cs, cs + 1, check);
+            }
+
+            chunked.applyChanges();
+        };
+
+        if (showCallback != null) {
+            dopt.callback = (line) -> {
+                final int index = lines.indexOf(line);
+                if (index >= 0) {
+                    final int cs = indices.get(index);
+                    final int end = TextViewUtils.getLineEnd(text, cs);
+                    showCallback.callback(end);
+                }
+            };
+        }
+
+        GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+    }
+
+    public static void showSelectSpecialFileDialog(final Activity activity, final GsCallback.a1<File> callback) {
+        final DialogOptions dopt = baseConf(activity);
+        dopt.titleText = R.string.special_documents;
+        final ArrayList<String> data = new ArrayList<>();
+        data.add(activity.getString(R.string.recently_viewed_documents));
+        data.add(activity.getString(R.string.popular_documents));
+        data.add(activity.getString(R.string.favourites));
+        dopt.data = data;
+        dopt.isSearchEnabled = false;
+        final AppSettings as = ApplicationObject.settings();
+
+        dopt.positionCallback = i -> {
+            switch (i.get(0)) {
+                default:
+                case 0:
+                    selectItemDialog(activity, R.string.recently_viewed_documents, as.getRecentFiles(), File::getName, callback);
+                    break;
+                case 1:
+                    selectItemDialog(activity, R.string.popular_documents, as.getPopularFiles(), File::getName, callback);
+                    break;
+                case 2:
+                    selectItemDialog(activity, R.string.favourites, as.getFavouriteFiles(), File::getName, callback);
+                    break;
+            }
+        };
+
+        GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+    }
+
+    /* Dialog to select an item from a list of items */
+    public static <T> void selectItemDialog(
+            final Activity activity,
+            final int title,
+            final Collection<T> items,
+            final GsCallback.s1<T> toString,
+            final GsCallback.a1<T> callback
+    ) {
+        final DialogOptions dopt = baseConf(activity);
+        dopt.titleText = title;
+        final List<T> data = items instanceof List ? (List<T>) items : new ArrayList<>(items);
+        dopt.data = GsCollectionUtils.map(data, toString::callback);
+        dopt.positionCallback = i -> callback.callback(data.get(i.get(0)));
+        dopt.isSearchEnabled = true;
+        GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static void showGlobFilesDialog(
+            final Activity activity,
+            final File searchDir,
+            final GsCallback.a1<File> callback
+    ) {
+        final DialogOptions dopt = baseConf(activity);
+        dopt.titleText = R.string.search_documents;
+        dopt.isSearchEnabled = true;
+        dopt.state.searchText = "**/[!.]*.*";
+        dopt.callback = (query) -> {
+            final List<File> found = GsFileUtils.searchFiles(searchDir, query);
+            final DialogOptions dopt2 = baseConf(activity);
+            dopt2.titleText = R.string.select;
+            dopt2.isSearchEnabled = true;
+            dopt2.data = GsCollectionUtils.map(found, File::getPath);
+            dopt2.positionCallback = (result) -> callback.callback(found.get(result.get(0)));
+            dopt2.neutralButtonText = R.string.search;
+            dopt2.neutralButtonCallback = dialog2 -> {
+                dialog2.dismiss();
+                showGlobFilesDialog(activity, searchDir, callback);
+            };
+            GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt2);
         };
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
@@ -536,14 +724,12 @@ public class MarkorDialogFactory {
             final Set<String> currentKeys,
             final GsCallback.a1<Collection<String>> callback
     ) {
-        GsSearchOrCustomTextDialog.DialogOptions dopt = new GsSearchOrCustomTextDialog.DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.data = new ArrayList<>(allKeys);
         dopt.preSelected = GsCollectionUtils.map(currentKeys, s -> dopt.data.indexOf(s));
         dopt.titleText = title;
         dopt.searchHintText = R.string.search_or_custom;
-        dopt.isMultiSelectEnabled = true;
-        dopt.isLongPressSelectEnabled = false; // Don't want to remove all others by selecting just one
+        dopt.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
         dopt.callback = (str) -> callback.callback(GsCollectionUtils.union(currentKeys, Collections.singleton(str)));
         dopt.positionCallback = (newSel) -> callback.callback(
                 GsCollectionUtils.map(newSel, pi -> dopt.data.get(pi).toString()));
@@ -554,16 +740,15 @@ public class MarkorDialogFactory {
     // Get a callback which applies highligting spans to a todo.txt line
     private static GsCallback.a1<Spannable> getSttHighlighter() {
         final SyntaxHighlighterBase h = new TodoTxtBasicSyntaxHighlighter(as()).configure();
-        return s -> h.setSpannable(s).recompute().applyAll();
+        return s -> h.setSpannable(s).recompute().applyStatic().applyDynamic();
     }
 
     // Basic search dialog
     public static void showSearchDialog(final Activity activity, final EditText text) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         final Editable edit = text.getText();
         dopt.data = Arrays.asList(edit.toString().split("\n", -1)); // Do not ignore empty lines
-        dopt.extraFilter = "[^\\s]+"; // Line must have one or more non-whitespace to display
+        dopt.dataFilter = "[^\\s]+"; // Line must have one or more non-whitespace to display
         dopt.titleText = R.string.search_documents;
         dopt.searchHintText = R.string.search;
         dopt.neutralButtonCallback = (dialog) -> {
@@ -586,58 +771,75 @@ public class MarkorDialogFactory {
         }
     }
 
+    /**
+     * Show a dialog to select a heading
+     *
+     * @param activity      Activity
+     * @param edit          Editable text
+     * @param webView       WebView corresponding to the text
+     * @param state         State of the dialog, so it can be restored.
+     * @param levelCallback Callback to get the heading level given the text and line start and end
+     */
     public static void showHeadlineDialog(
             final Activity activity,
             final EditText edit,
-            final Set<Integer> disabled,
-            final GsCallback.r3<Integer, CharSequence, Integer, Integer> headingLevel
+            final WebView webView,
+            final ActionButtonBase.HeadlineState state,
+            final GsCallback.r3<Integer, CharSequence, Integer, Integer> levelCallback
     ) {
         // Get all headings and their levels
         final CharSequence text = edit.getText();
         final List<Heading> headings = new ArrayList<>();
         GsTextUtils.forEachline(text, (line, start, end) -> {
-            final int level = headingLevel.callback(text, start, end);
+            final int level = levelCallback.callback(text, start, end);
             if (level > 0) {
                 headings.add(new Heading(level, text.subSequence(start, end), line));
             }
+            return true;
         });
 
         // List of levels present in text
         final List<Integer> levels = new ArrayList<>(new TreeSet<>(GsCollectionUtils.map(headings, h -> h.level)));
 
         // Currently filtered headings
-        final List<Integer> filtered = GsCollectionUtils.indices(headings, h -> !disabled.contains(h.level));
+        final List<Integer> filtered = GsCollectionUtils.indices(headings, h -> !state.disabledLevels.contains(h.level));
         final List<String> data = GsCollectionUtils.map(filtered, i -> headings.get(i).str);
 
-
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
+        dopt.state.copyFrom(state);
         dopt.data = data;
         dopt.titleText = R.string.table_of_contents;
         dopt.searchHintText = R.string.search;
         dopt.isSearchEnabled = true;
-        dopt.neutralButtonText = R.string.filter;
+        dopt.isSoftInputVisible = false;
+
         dopt.positionCallback = result -> {
             final int index = filtered.get(result.get(0));
-            TextViewUtils.selectLines(edit, headings.get(index).line);
+            final int line = headings.get(index).line;
+
+            TextViewUtils.selectLines(edit, line);
+            final String jumpJs = "document.querySelector('[line=\"" + line + "\"]').scrollIntoView();";
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                webView.evaluateJavascript(jumpJs, null);
+            }
         };
 
+        dopt.neutralButtonText = R.string.filter;
         dopt.neutralButtonCallback = (dialog) -> {
-            final DialogOptions dopt2 = new DialogOptions();
-            dopt2.preSelected = GsCollectionUtils.indices(levels, l -> !disabled.contains(l));
+            final DialogOptions dopt2 = baseConf(activity);
+            dopt2.preSelected = GsCollectionUtils.indices(levels, l -> !state.disabledLevels.contains(l));
             dopt2.data = GsCollectionUtils.map(levels, l -> "H" + l);
             dopt2.titleText = R.string.filter;
             dopt2.isSearchEnabled = false;
-            dopt2.isMultiSelectEnabled = true;
-            dopt2.dialogWidthDp = 250;
+            dopt2.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
             dopt2.positionCallback = (selected) -> {
                 // Update levels so the selected ones are true
-                disabled.clear();
-                disabled.addAll(GsCollectionUtils.setDiff(levels, GsCollectionUtils.map(selected, levels::get)));
+                state.disabledLevels.clear();
+                state.disabledLevels.addAll(GsCollectionUtils.setDiff(levels, GsCollectionUtils.map(selected, levels::get)));
 
                 // Update selection and data
                 filtered.clear();
-                filtered.addAll(GsCollectionUtils.indices(headings, h -> !disabled.contains(h.level)));
+                filtered.addAll(GsCollectionUtils.indices(headings, h -> !state.disabledLevels.contains(h.level)));
 
                 data.clear();
                 data.addAll(GsCollectionUtils.map(filtered, (si, i) -> headings.get(si).str));
@@ -647,45 +849,44 @@ public class MarkorDialogFactory {
             };
             GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt2);
         };
-        dopt.gravity = Gravity.TOP;
+
+        dopt.dismissCallback = (d) -> state.copyFrom(dopt.state);
+
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
     public static void showIndentSizeDialog(final Activity activity, final int indent, final GsCallback.a1<String> callback) {
-        DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.callback = callback;
         dopt.data = Arrays.asList("1", "2", "4", "8");
         dopt.highlightData = Collections.singletonList(Integer.toString(indent));
         dopt.isSearchEnabled = false;
-        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
-        dopt.dialogHeightDp = WindowManager.LayoutParams.WRAP_CONTENT;
         dopt.titleText = R.string.indent;
+        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
     public static void showFontSizeDialog(final Activity activity, final int currentSize, final GsCallback.a1<Integer> callback) {
-        DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.callback = (selectedDialogValueAsString -> callback.callback(Integer.parseInt(selectedDialogValueAsString)));
-        final int minFontSize = 1;
+        final int minFontSize = 5;
         final int maxFontSize = 36;
         final List<String> sizes = new ArrayList<>();
         for (int i = minFontSize; i <= maxFontSize; i++) {
+            if (i == currentSize) dopt.state.listPosition = i - minFontSize - 2;
             sizes.add(Integer.toString(i));
         }
         dopt.data = sizes;
         dopt.highlightData = Collections.singletonList(Integer.toString(currentSize));
         dopt.isSearchEnabled = false;
-        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
         dopt.dialogHeightDp = 400;
         dopt.titleText = R.string.font_size;
+        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
     public static void showPriorityDialog(Activity activity, char selectedPriority, GsCallback.a1<String> callback) {
-        DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.callback = callback;
 
         List<String> availableData = new ArrayList<>();
@@ -720,8 +921,7 @@ public class MarkorDialogFactory {
 
     @SuppressLint("StringFormatMatches")
     public static void showCopyMoveConflictDialog(final Activity activity, final String fileName, final String destName, final boolean multiple, final GsCallback.a1<Integer> callback) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
         dopt.positionCallback = (result) -> callback.callback(result.get(0));
         final List<String> data = new ArrayList<>();
         // Order of options here should be synchronized with WrMarkorSingleton._moveOrCopySelected
@@ -735,11 +935,8 @@ public class MarkorDialogFactory {
         }
         dopt.data = data;
         dopt.isSearchEnabled = false;
-        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
-        dopt.dialogHeightDp = WindowManager.LayoutParams.WRAP_CONTENT;
         dopt.messageText = activity.getString(R.string.copy_move_conflict_message, fileName, destName);
         dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
-        dopt.dialogHeightDp = WindowManager.LayoutParams.WRAP_CONTENT;
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
@@ -762,46 +959,224 @@ public class MarkorDialogFactory {
         }
     }
 
-    // Read all files in snippets folder with appropriate extension
-    // Create a map of snippet title -> text
-    public static Map<String, File> getSnippets(final AppSettings as) {
-        final Map<String, File> texts = new TreeMap<>();
-        final File folder = new File(as.getNotebookDirectory(), ".app/snippets");
-        if ((!folder.exists() || !folder.isDirectory() || !folder.canRead())) {
-            if (!folder.mkdirs()) {
-                return texts;
-            }
-        }
-
-        // Read all files in snippets folder with appropriate extension
-        // Create a map of snippet title -> text
-        for (final File f : folder.listFiles()) {
-            if (f.exists() && f.canRead() && FormatRegistry.isFileSupported(f, true)) {
-                texts.put(f.getName(), f);
-            }
-        }
-        return texts;
-    }
-
     public static void showInsertSnippetDialog(final Activity activity, final GsCallback.a1<String> callback) {
-        final DialogOptions dopt = new DialogOptions();
-        baseConf(activity, dopt);
+        final DialogOptions dopt = baseConf(activity);
 
-        final Map<String, File> texts = getSnippets(as());
+        final List<File> snippets = as().getSnippetFiles();
 
-        final List<String> data = new ArrayList<>(texts.keySet());
-        dopt.data = data;
+        dopt.data = GsCollectionUtils.map(snippets, File::getName);
         dopt.isSearchEnabled = true;
         dopt.titleText = R.string.insert_snippet;
-        dopt.messageText = Html.fromHtml("<small><small>" + as().getSnippetsFolder().getAbsolutePath() + "</small></small>");
-        dopt.positionCallback = (ind) -> callback.callback(GsFileUtils.readTextFileFast(texts.get(data.get(ind.get(0)))).first);
+        dopt.messageText = Html.fromHtml("<small><small>" + as().getSnippetsDirectory().getAbsolutePath() + "</small></small>");
+        dopt.positionCallback = (ind) -> callback.callback(GsFileUtils.readTextFileFast(snippets.get(ind.get(0))).first);
+        dopt.neutralButtonText = R.string.folder;
+        dopt.neutralButtonCallback = (dialog) -> {
+            dialog.dismiss();
+            DocumentActivity.launch(activity, as().getSnippetsDirectory(), null, null);
+        };
+        dopt.longPressCallback = (pos) -> DocumentActivity.launch(activity, snippets.get(pos), null, null);
         GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
     }
 
-    public static void baseConf(Activity activity, DialogOptions dopt) {
-        dopt.isDarkDialog = GsContextUtils.instance.isDarkModeEnabled(activity);
+    public static void showNotebookFilterDialog(
+            final Activity activity,
+            @Nullable GsSearchOrCustomTextDialog.DialogState state,
+            @Nullable final GsCallback.b1<File> filter,
+            final GsCallback.a2<File, Boolean> callback
+    ) {
+        final AppSettings as = ApplicationObject.settings();
+
+        final FileSearchEngine.SearchOptions opt = new FileSearchEngine.SearchOptions();
+        opt.rootSearchDir = as.getNotebookDirectory();
+        opt.query = "";
+        opt.isRegexQuery = false;
+        opt.isCaseSensitiveQuery = false;
+        opt.isSearchInContent = false;
+        opt.isOnlyFirstContentMatch = false;
+        opt.ignoredDirectories = as.getFileSearchIgnorelist();
+        opt.maxSearchDepth = Integer.MAX_VALUE;  // Search entire notebook
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            opt.password = as.getDefaultPassword();
+        }
+
+        FileSearchEngine.queueFileSearch(activity, opt, searchResults -> {
+            final DialogOptions dopt = baseConf(activity);
+            dopt.titleText = R.string.notebook;
+            dopt.messageText = as.getNotebookDirectory().getPath();
+            if (filter != null) {
+                GsCollectionUtils.keepIf(searchResults, f -> filter.callback(f.file));
+            }
+            dopt.data = GsCollectionUtils.map(searchResults, f -> f.relPath);
+            dopt.isSearchEnabled = true;
+            dopt.positionCallback = (posns) -> callback.callback(searchResults.get(posns.get(0)).file, false);
+            dopt.longPressCallback = (pos) -> callback.callback(searchResults.get(pos).file, true);
+            dopt.searchFunction = (contraint, str, index) -> {
+                final String name = searchResults.get(index).file.getName();
+                return name.toLowerCase().contains(contraint.toString().toLowerCase());
+            };
+
+            if (state != null) {
+                dopt.state.copyFrom(state);
+                dopt.dismissCallback = (dialog) -> state.copyFrom(dopt.state);
+            }
+
+            GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+        });
+    }
+
+    public static void showFolderSortDialog(
+            final Activity activity,
+            final GsFileUtils.SortOrder currentOrder,
+            final GsFileUtils.SortOrder globalOrder,
+            final GsCallback.a1<GsFileUtils.SortOrder> callback
+    ) {
+        final DialogOptions dopt = new DialogOptions();
+        baseConf(activity, dopt);
+
+        final List<String> data = new ArrayList<>();
+        final List<Integer> icons = new ArrayList<>();
+        final List<Integer> layouts = new ArrayList<>();
+
+        data.add(activity.getString(R.string.folder_local));
+        icons.add(R.drawable.ic_save_black_24dp);
+        layouts.add(android.R.layout.simple_list_item_multiple_choice);
+
+        data.add(activity.getString(R.string.name));
+        icons.add(R.drawable.ic_sort_by_alpha_black_24dp);
+        layouts.add(android.R.layout.simple_list_item_single_choice);
+
+        data.add(activity.getString(R.string.date));
+        icons.add(R.drawable.ic_date_range_black_24dp);
+        layouts.add(android.R.layout.simple_list_item_single_choice);
+
+        data.add(activity.getString(R.string.size));
+        icons.add(R.drawable.ic_sd_card_black_24dp);
+        layouts.add(android.R.layout.simple_list_item_single_choice);
+
+        data.add(activity.getString(R.string.mime_type));
+        icons.add(R.drawable.ic_baseline_plagiarism_24);
+        layouts.add(android.R.layout.simple_list_item_single_choice);
+
+        data.add(activity.getString(R.string.folder_first));
+        icons.add(R.drawable.ic_baseline_rule_folder_24);
+        layouts.add(android.R.layout.simple_list_item_multiple_choice);
+
+        data.add(activity.getString(R.string.reverse_order));
+        icons.add(R.drawable.ic_baseline_arrow_upward_24);
+        layouts.add(android.R.layout.simple_list_item_multiple_choice);
+
+        data.add(activity.getString(R.string.dotfiles));
+        icons.add(R.drawable.ic_regex_black_24dp);
+        layouts.add(android.R.layout.simple_list_item_multiple_choice);
+
+        dopt.data = data;
+        dopt.iconsForData = icons;
+        dopt.listItemLayouts = layouts;
+
+        dopt.preSelected = new HashSet<>();
+        if (currentOrder.isFolderLocal) dopt.preSelected.add(0);
+        if (currentOrder.folderFirst) dopt.preSelected.add(5);
+        if (currentOrder.reverse) dopt.preSelected.add(6);
+        if (currentOrder.showDotFiles) dopt.preSelected.add(7);
+
+        final Map<String, Integer> typeToPos = new HashMap<>();
+        typeToPos.put(GsFileUtils.SORT_BY_NAME, 1);
+        typeToPos.put(GsFileUtils.SORT_BY_MTIME, 2);
+        typeToPos.put(GsFileUtils.SORT_BY_FILESIZE, 3);
+        typeToPos.put(GsFileUtils.SORT_BY_MIMETYPE, 4);
+        dopt.preSelected.add(GsCollectionUtils.getOrDefault(typeToPos, currentOrder.sortByType, 1));
+        dopt.selectionMode = DialogOptions.SelectionMode.MULTIPLE;
+        dopt.isSearchEnabled = false;
+        dopt.titleText = R.string.sort_by;
+        dopt.dialogWidthDp = WindowManager.LayoutParams.WRAP_CONTENT;
+        dopt.showCountInOkButton = false;
+        dopt.showSelectAllButton = false;
+
+        final Set<Integer> prevSelection = new HashSet<>(dopt.preSelected);
+        final boolean[] resetGlobal = {false};
+        final Set<Integer> radioSet = new HashSet<>(Arrays.asList(1, 2, 3, 4));
+        dopt.selectionChangedCallback = (selection) -> {
+            final Set<Integer> added = GsCollectionUtils.setDiff(selection, prevSelection);
+            final Set<Integer> removed = GsCollectionUtils.setDiff(prevSelection, selection);
+            if (globalOrder != null && currentOrder.isFolderLocal && removed.contains(0)) {
+                // Reset to global if folder local is unchecked
+                resetGlobal[0] = true;
+                selection.clear();
+                if (globalOrder.folderFirst) selection.add(5);
+                if (globalOrder.reverse) selection.add(6);
+                if (globalOrder.showDotFiles) selection.add(7);
+                selection.add(GsCollectionUtils.getOrDefault(typeToPos, globalOrder.sortByType, 1));
+            } else if (!Collections.disjoint(removed, radioSet)) {
+                // If a radio button is unchecked add it back
+                selection.addAll(removed);
+            } else if (!Collections.disjoint(added, radioSet)) {
+                // If a radio button is checked, remove all other radio buttons
+                selection.removeAll(GsCollectionUtils.setDiff(radioSet, added));
+            }
+            prevSelection.clear();
+            prevSelection.addAll(selection);
+        };
+
+        dopt.positionCallback = (selection) -> {
+            final GsFileUtils.SortOrder order = new GsFileUtils.SortOrder();
+            order.isFolderLocal = selection.contains(0);
+            order.folderFirst = selection.contains(5);
+            order.reverse = selection.contains(6);
+            order.showDotFiles = selection.contains(7);
+            if (selection.contains(2)) order.sortByType = GsFileUtils.SORT_BY_MTIME;
+            else if (selection.contains(3)) order.sortByType = GsFileUtils.SORT_BY_FILESIZE;
+            else if (selection.contains(4)) order.sortByType = GsFileUtils.SORT_BY_MIMETYPE;
+            else order.sortByType = GsFileUtils.SORT_BY_NAME;
+            callback.callback(order);
+        };
+
+        GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+    }
+
+    public static void showConfirmDialog(
+            final Activity activity,
+            final int title,
+            final @Nullable CharSequence message,
+            final @Nullable Collection<CharSequence> messageItems,
+            final @Nullable GsCallback.a0 confirmCallback
+    ) {
+        final DialogOptions dopt = baseConf(activity);
+        dopt.isSearchEnabled = false;
+
+        if (title != 0) {
+            dopt.titleText = title;
+        }
+
+        if (message != null) {
+            dopt.messageText = message;
+        }
+
+        if (messageItems != null) {
+            dopt.data = new ArrayList<>(messageItems);
+        }
+
+        if (confirmCallback != null) {
+            dopt.callback = (ignored) -> confirmCallback.callback();
+            dopt.selectionMode = DialogOptions.SelectionMode.NONE;
+        }
+
+        GsSearchOrCustomTextDialog.showMultiChoiceDialogWithSearchFilterUI(activity, dopt);
+    }
+
+    public static DialogOptions baseConf(final Context context) {
+        return baseConf(context, null);
+    }
+
+    public static DialogOptions baseConf(final Context context, DialogOptions dopt) {
+        if (dopt == null) {
+            dopt = new DialogOptions();
+        }
+        dopt.isDarkDialog = GsContextUtils.instance.isDarkModeEnabled(context);
         dopt.clearInputIcon = R.drawable.ic_baseline_clear_24;
-        dopt.textColor = ContextCompat.getColor(activity, R.color.primary_text);
-        dopt.highlightColor = ContextCompat.getColor(activity, R.color.accent);
+        dopt.textColor = ContextCompat.getColor(context, R.color.primary_text);
+        dopt.highlightColor = ContextCompat.getColor(context, R.color.accent);
+        dopt.dialogStyle = R.style.Theme_AppCompat_DayNight_Dialog_Rounded;
+
+        return dopt;
     }
 }

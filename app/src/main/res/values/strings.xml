@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -26,8 +26,8 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Create Folder</string>
     <string name="create_new_document">Create new document</string>
     <string name="move">Move</string>
-    <string name="copy">Copy</string>
     <string name="info">Info</string>
+
     <string name="file_folder_already_exists_please_use_a_different_name">File/folder already exists! Please use a different name</string>
 
     <string name="import_from_device">Import from device</string>
@@ -63,6 +63,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="last_modified">Last modified</string>
     <string name="select_this_folder">Select this folder</string>
     <string name="select">Select</string>
+    <string name="select_all">Select all</string>
     <string name="create">Create</string>
     <string name="select_entries">Select entries</string>
     <string name="one_item_selected">One item selected</string>
@@ -73,7 +74,8 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
 
     <string name="name">Name</string>
     <string name="url_or_path">URL / Path</string>
-    <string name="insert_link">Insert Link</string>
+    <string name="insert_link">Insert link</string>
+    <string name="format_link">Format link</string>
     <string name="insert_image">Insert Image</string>
 
     <string name="contributors">Contributors</string>
@@ -189,15 +191,18 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="asciidoc_special_key">Special AsciiDoc Content</string>
     <string name="key_page_up">Page Up (Page Up)</string>
     <string name="key_page_down">Page Down (Page Down)</string>
-    <string name="move_text_one_line_up">Move text one line up</string>
-    <string name="move_text_one_line_down">Move text one line down</string>
-    <string name="start_new_line_below">Start new line below</string>
     <string name="key_pos_1">Line Start (Pos Home)</string>
     <string name="key_pos_end">Line End (Pos End)</string>
     <string name="key_pos_1_document">Document Start</string>
     <string name="key_pos_end_document">Document End</string>
+    <string name="move_text_one_line_up">Move line up</string>
+    <string name="move_text_one_line_down">Move line down</string>
+    <string name="start_new_line_below">Start new line</string>
+    <string name="select_current_line">Select current line</string>
     <string name="key_ctrl_a">Select all (Ctrl+A)</string>
     <string name="key_tab">Tabulator</string>
+    <string name="zero_width_space">Zero-width space</string>
+    <string name="em_space">Em space (&amp;emsp;)</string>
     <string name="start_on_bottom">Start on bottom</string>
     <string name="start_on_bottom_when_loading_document">Upon loading a document, position cursor at its end</string>
     <string name="unordered_list_character">Unordered list character</string>
@@ -225,11 +230,14 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="edit_text_in_center_of_screen">Edit text in the center of the screen</string>
     <string name="clipboard">Clipboard</string>
     <string name="select_existing_document">Select existing document</string>
+    <string name="select_create_document">Select or create document</string>
+    <string name="select_create_folder">Select or create folder</string>
     <string name="open_source_licenses">Open Source Licenses</string>
     <string name="rate_this_app">Rate this app</string>
     <string name="translate">Translate</string>
     <string name="more_info_and_help">More info and help</string>
     <string name="report_bugs">Report bugs</string>
+    <string name="do_you_have_a_question_or_problem">Do you have a question or a problem?</string>
 
 
     <string name="join_community">Join the Community</string>
@@ -239,6 +247,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">Project License</string>
     <string name="contribute_code_to_this_project_anybody_welcome">Contribute code to the project. Everybody is welcome to do so, including newcomers</string>
     <string name="project_team">Project Team</string>
+    <string name="community">Community</string>
     <string name="contributors_public_add_yourself_description">Show contributor info. Provide it to be shown here on an opt-in basis after contributing</string>
 
     <string name="descending">descending</string>
@@ -270,7 +279,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">No calendar app is installed!</string>
     <string name="popular_documents">Popular documents</string>
     <string name="color">Color</string>
-    <string name="zero_width_space">Zero-width space</string>
     <string name="basic_color_scheme">Basic color scheme</string>
     <string name="background_foreground_color_in_editor_works_dark_light">Changes background and foreground color of the text editor. Adjusts to app theme so available in light and dark theme. Syntax highlighting colors remain the same.</string>
     <string name="preset">Preset</string>
@@ -288,7 +296,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">Pick date</string>
     <string name="pick_time">Pick time</string>
     <string name="get_format_instead_date_or_time">Get format instead date or time</string>
-    <string name="always_use_current_date_and_time">Always use current date &amp; time</string>
+    <string name="use_current_date_and_time">Use current date &amp; time</string>
     <string name="result">Result</string>
     <string name="just_time">Time only</string>
     <string name="just_date">Date only</string>
@@ -331,7 +339,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="wrap_words">Wrap words</string>
     <string name="line_numbers">Line numbers</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">Soft break if text doesn\'t fit to screen width. Else enable horizontal scrolling.</string>
-    <string name="recursive_search_in_current_directory">Recursive search in current directory.</string>
+    <string name="recursive_search_in_location">Recursive search in %s</string>
     <string name="always_open_with_this_app">Always open with this app</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">Always open files with this app when the list contains the file extension. Use \'None, .html, .css , .js\' for example if you want to edit web files and those without file extension.</string>
     <string name="open_file_with">Open file with</string>
@@ -344,6 +352,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="current">Current</string>
     <string name="record_audio">Record Audio</string>
     <string name="attach">Attach</string>
+    <string name="attachment">Attachment</string>
     <string name="copy_file">Copy file</string>
     <string name="page">Page</string>
     <string name="experimental_features">Experimental features</string>
@@ -354,6 +363,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="how_much_columns_press_table_button_long_to_start_table">How many columns? Press table button long to start a table (insert header), press short to add a row.</string>
     <string name="example_of_a_markdown_table">Example of a Markdown table</string>
     <string name="delete_lines">Delete lines</string>
+    <string name="duplicate_lines">Duplicate lines</string>
     <string name="unordered_list">Unordered list</string>
     <string name="ordered_list">Ordered list</string>
     <string name="check_list">Check list</string>
@@ -383,6 +393,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
 
     <string name="create_new_file_or_folder">Create a new file or folder</string>
     <string name="choose_format">Choose format</string>
+    <string name="clear_selection">Clear selection</string>
     <string name="selected">Selected</string>
     <string name="back">Back</string>
     <string name="expand_collapse">Expand / Collapse</string>
@@ -462,9 +473,17 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="attachment_folder_name_desc">Subfolder under the current folder where attachments will be saved. If left blank, attachments will be saved in the current folder.</string>
     <string name="auto_format">Auto-format</string>
     <string name="insert_snippet">Insert snippet</string>
+    <string name="snippet_directory">Snippet / Template directory</string>
     <string name="error_could_not_open_file">Error: Could not open file.</string>
     <string name="document_error_clip">Error encountered: Text copied to clipboard.</string>
     <string name="wont_save_min_length">Files with fewer than %d characters not saved automatically in order to prevent data loss.</string>
     <string name="advanced_filtering_help"><![CDATA[<small><a href="https://www.github.com/gsantner/markor/discussions/1940">Advanced filtering syntax</a></small>]]></string>
     <string name="filter">Filter</string>
+    <string name="text_case">Text Case</string>
+    <string name="toggle_case">Toggle Case (Ex: Case->CASE->case)</string>
+    <string name="switch_case">Switch Case (Ex: CaSe->cAsE)</string>
+    <string name="capitalize_words">Capitalize Words (Ex: a note->A Note)</string>
+    <string name="capitalize_sentences">Capitalize Sentences (Ex: case->Case)</string>
+    <string name="use_tab_to_indent">Indent lines with TAB key</string>
+    <string name="folder_local">Folder local</string>
 </resources>

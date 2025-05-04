@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">ایجاد پوشه</string>
     <string name="create_new_document">ایجاد پرونده جدید</string>
     <string name="move">بریدن</string>
-    <string name="copy">کپی</string>
     <string name="info">اطلاعات</string>
     <string name="file_folder_already_exists_please_use_a_different_name">پوشه وجود دارد! لطفا از نام دیگری استفاده کنید</string>
     <string name="import_from_device">درون‌ریزی از دستگاه</string>
@@ -68,7 +67,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">مخفی کردن نوار وضعیت</string>
     <string name="name">نام</string>
     <string name="url_or_path">آدرس(URL) / مسیر</string>
-    <string name="insert_link">وارد کردن لینک</string>
     <string name="insert_image">وارد کردن تصویر</string>
     <string name="contributors">همکاران</string>
     <string name="save_location">ذخیره مکان</string>
@@ -178,15 +176,13 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="asciidoc_special_key">محتوای خاص اَسکیداک</string>
     <string name="key_page_up">بالا بردن صفحه (Page Up)</string>
     <string name="key_page_down">پایین بردن صفحه (Page Down)</string>
-    <string name="move_text_one_line_up">یک خط بالا بردن متن</string>
-    <string name="move_text_one_line_down">یک خط پایین بردن متن</string>
-    <string name="start_new_line_below">باز کردن خط جدید زیر نشانگر</string>
     <string name="key_pos_1">ابتدای خط (کلید Home)</string>
     <string name="key_pos_end">انتهای خط (کلید End)</string>
     <string name="key_pos_1_document">آغاز پرونده</string>
     <string name="key_pos_end_document">پایان پرونده</string>
     <string name="key_ctrl_a">انتخاب همه (Ctrl + A)</string>
     <string name="key_tab">Tabulator</string>
+    <string name="zero_width_space">نیم‌فاصله</string>
     <string name="start_on_bottom">شروع از پایین</string>
     <string name="start_on_bottom_when_loading_document">بعد از اینکه پرونده بارگزاری شد، موقعیت مکان‌نما در انتهای پرونده قرار بگیرد</string>
     <string name="unordered_list_character">نشانه‌ی کنار لیست‌های غیر عددی</string>
@@ -226,6 +222,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">پروانه‌ی پروژه</string>
     <string name="contribute_code_to_this_project_anybody_welcome">همه آزادند تا به این پروژه کد اضافه کنند. حتا تازه‌کارها</string>
     <string name="project_team">تیم پروژه</string>
+    <string name="community">انجمن</string>
     <string name="contributors_public_add_yourself_description">Show contributor info. Provide it to be shown here on an opt-in basis after contributing</string>
     <string name="descending">رو به پایین</string>
     <string name="ascending">رو به بالا</string>
@@ -253,7 +250,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">برنامه‌ای برای تقویم نصب نشده است!</string>
     <string name="popular_documents">اسناد محبوب</string>
     <string name="color">رنگ</string>
-    <string name="zero_width_space">نیم‌فاصله</string>
     <string name="basic_color_scheme">Basic color scheme</string>
     <string name="background_foreground_color_in_editor_works_dark_light">Changes background and foreground color of the text editor. Adjusts to app theme so available in light and dark theme. Syntax highlighting colors remain the same.</string>
     <string name="preset">پیش‌تنظیم</string>
@@ -271,7 +267,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">انتخاب تاریخ</string>
     <string name="pick_time">انتخاب زمان</string>
     <string name="get_format_instead_date_or_time">Get format instead date or time</string>
-    <string name="always_use_current_date_and_time">همیشه از تاریخ و زمان جاری استفاده شود</string>
     <string name="result">نتیجه</string>
     <string name="just_time">فقط زمان</string>
     <string name="just_date">Date only</string>
@@ -314,7 +309,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="wrap_words">Wrap words</string>
     <string name="line_numbers">شماره‌ی خطوط</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">Soft break if text doesn\'t fit to screen width. Else enable horizontal scrolling.</string>
-    <string name="recursive_search_in_current_directory">Recursive search in current directory.</string>
     <string name="always_open_with_this_app">Always open with this app</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">Always open files with this app when the list contains the file extension. Use \'None, .html, .css , .js\' for example if you want to edit web files and those without file extension.</string>
     <string name="open_file_with">باز کردن فایل به‌وسیله‌ی</string>
@@ -365,6 +359,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="archive_completed_tasks">Archive completed tasks</string>
     <string name="create_new_file_or_folder">ساخت پرونده یا پوشه جدید</string>
     <string name="choose_format">انتخاب قالب</string>
+    <string name="clear_selection">پاک کردن موارد انتخابی</string>
     <string name="selected">انتخاب شده</string>
     <string name="back">بازگشت</string>
     <string name="expand_collapse">گسترش دادن / بستن</string>

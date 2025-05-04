@@ -1,26 +1,26 @@
 /*#######################################################
  *
- *   Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
 #########################################################*/
 package net.gsantner.markor.activity;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -33,6 +33,8 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -50,11 +52,13 @@ import net.gsantner.markor.frontend.FileInfoDialog;
 import net.gsantner.markor.frontend.MarkorDialogFactory;
 import net.gsantner.markor.frontend.filebrowser.MarkorFileBrowserFactory;
 import net.gsantner.markor.frontend.textview.HighlightingEditor;
+import net.gsantner.markor.frontend.textview.LineNumbersTextView;
 import net.gsantner.markor.frontend.textview.TextViewUtils;
 import net.gsantner.markor.model.AppSettings;
 import net.gsantner.markor.model.Document;
 import net.gsantner.markor.util.MarkorContextUtils;
 import net.gsantner.markor.web.MarkorWebViewClient;
+import net.gsantner.markor.widget.TodoWidgetProvider;
 import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserOptions;
 import net.gsantner.opoc.frontend.settings.GsFontPreferenceCompat;
 import net.gsantner.opoc.frontend.textview.TextViewUndoRedo;
@@ -87,20 +91,22 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
     }
 
     private HighlightingEditor _hlEditor;
-    private ViewGroup _textActionsBar;
     private WebView _webView;
-    private DraggableScrollbarScrollView _primaryScrollView;
+    private MarkorWebViewClient _webViewClient;
+    private ViewGroup _editorHolder;
+    private ViewGroup _textActionsBar;
 
-    private HorizontalScrollView _hsView;
+    private DraggableScrollbarScrollView _verticalScrollView;
+    private HorizontalScrollView _horizontalScrollView;
+    private LineNumbersTextView _lineNumbersView;
     private SearchView _menuSearchViewForViewMode;
     private Document _document;
     private FormatRegistry _format;
     private MarkorContextUtils _cu;
     private TextViewUndoRedo _editTextUndoRedoHelper;
-    private boolean _isPreviewVisible;
-    private MarkorWebViewClient _webViewClient;
-    private boolean _nextConvertToPrintMode = false;
     private MenuItem _saveMenuItem, _undoMenuItem, _redoMenuItem;
+    private boolean _isPreviewVisible;
+    private boolean _nextConvertToPrintMode = false;
 
     public DocumentEditAndViewFragment() {
         super();
@@ -129,21 +135,29 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         final Activity activity = getActivity();
 
         _hlEditor = view.findViewById(R.id.document__fragment__edit__highlighting_editor);
+        _editorHolder = view.findViewById(R.id.document__fragment__edit__editor_holder);
         _textActionsBar = view.findViewById(R.id.document__fragment__edit__text_actions_bar);
         _webView = view.findViewById(R.id.document__fragment_view_webview);
-        _primaryScrollView = view.findViewById(R.id.document__fragment__edit__content_editor__scrolling_parent);
+        _verticalScrollView = view.findViewById(R.id.document__fragment__edit__content_editor__scrolling_parent);
+        _lineNumbersView = view.findViewById(R.id.document__fragment__edit__line_numbers_view);
         _cu = new MarkorContextUtils(activity);
+        _editTextUndoRedoHelper = new TextViewUndoRedo();
 
         // Using `if (_document != null)` everywhere is dangerous
         // It may cause reads or writes to _silently fail_
         // Instead we try to create it, and exit if that isn't possible
         if (isStateBad()) {
             Toast.makeText(activity, R.string.error_could_not_open_file, Toast.LENGTH_LONG).show();
-            activity.finish();
+            if (activity != null) {
+                activity.finish();
+            }
             return;
         }
 
-        if (_appSettings.getSetWebViewFulldrawing() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        _lineNumbersView.setup(_hlEditor);
+        _lineNumbersView.setLineNumbersEnabled(_appSettings.getDocumentLineNumbersEnabled(_document.path));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && _appSettings.getSetWebViewFulldrawing()) {
             WebView.enableSlowWholeDocumentDraw();
         }
 
@@ -151,6 +165,7 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         _webView.setWebChromeClient(new GsWebViewChromeClient(_webView, activity, view.findViewById(R.id.document__fragment_fullscreen_overlay)));
         _webView.setWebViewClient(_webViewClient);
         _webView.addJavascriptInterface(this, "Android");
+        _webView.setBackgroundColor(Color.TRANSPARENT);
         WebSettings webSettings = _webView.getSettings();
         webSettings.setBuiltInZoomControls(true);
         webSettings.setDisplayZoomControls(false);
@@ -164,63 +179,52 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         webSettings.setAllowContentAccess(true);
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setAllowUniversalAccessFromFileURLs(false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            webSettings.setMediaPlaybackRequiresUserGesture(false);
-        }
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && BuildConfig.IS_TEST_BUILD && BuildConfig.DEBUG) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && BuildConfig.IS_TEST_BUILD && BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true); // Inspect on computer chromium browser: chrome://inspect/#devices
         }
 
         // Upon construction, the document format has been determined from extension etc
         // Here we replace it with the last saved format.
-        _document.setFormat(_appSettings.getDocumentFormat(_document.getPath(), _document.getFormat()));
-        applyTextFormat(_document.getFormat());
-        _format.getActions().setDocument(_document);
+        applyTextFormat(_appSettings.getDocumentFormat(_document.path, _document.getFormat()));
 
         if (activity instanceof DocumentActivity) {
-            ((DocumentActivity) activity).setDocumentTitle(_document.getTitle());
+            ((DocumentActivity) activity).setDocumentTitle(_document.title);
         }
 
-        _hlEditor.setSaveInstanceState(false); // We will reload from disk
-        _document.resetChangeTracking(); // force next reload
-        loadDocument();
-
-        // If not set by loadDocument, se the undo-redo helper here
-        if (_editTextUndoRedoHelper == null) {
-            _editTextUndoRedoHelper = new TextViewUndoRedo(_hlEditor);
+        // Preview mode set before loadDocument to prevent flicker
+        final Bundle args = getArguments();
+        final boolean startInPreview = _appSettings.getDocumentPreviewState(_document.path);
+        if (args != null && savedInstanceState == null) { // Use the launch flag on first launch
+            setViewModeVisibility(args.getBoolean(START_PREVIEW, startInPreview), false);
+        } else {
+            setViewModeVisibility(startInPreview, false);
         }
 
-        // Configure the editor. Doing so after load helps prevent some errors
+        // Configure the editor
         // ---------------------------------------------------------
         _hlEditor.setLineSpacing(0, _appSettings.getEditorLineSpacing());
-        _hlEditor.setTextSize(TypedValue.COMPLEX_UNIT_SP, _appSettings.getDocumentFontSize(_document.getPath()));
+        _hlEditor.setTextSize(TypedValue.COMPLEX_UNIT_SP, _appSettings.getDocumentFontSize(_document.path));
         _hlEditor.setTypeface(GsFontPreferenceCompat.typeface(getContext(), _appSettings.getFontFamily(), Typeface.NORMAL));
         _hlEditor.setBackgroundColor(_appSettings.getEditorBackgroundColor());
         _hlEditor.setTextColor(_appSettings.getEditorForegroundColor());
         _hlEditor.setGravity(_appSettings.isEditorStartEditingInCenter() ? Gravity.CENTER : Gravity.NO_GRAVITY);
-        _hlEditor.setHighlightingEnabled(_appSettings.getDocumentHighlightState(_document.getPath(), _hlEditor.getText()));
-        _hlEditor.setLineNumbersEnabled(_appSettings.getDocumentLineNumbersEnabled(_document.getPath()));
-        _hlEditor.setAutoFormatEnabled(_appSettings.getDocumentAutoFormatEnabled(_document.getPath()));
+        _hlEditor.setHighlightingEnabled(_appSettings.getDocumentHighlightState(_document.path, _hlEditor.getText()));
+        _hlEditor.setAutoFormatEnabled(_appSettings.getDocumentAutoFormatEnabled(_document.path));
+        _hlEditor.setSaveInstanceState(false); // We will reload from disk
+        _hlEditor.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Do not need to send contents to accessibility
             _hlEditor.setImportantForAccessibility(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
         }
-        _webView.setBackgroundColor(Color.TRANSPARENT);
 
         // Various settings
-        setHorizontalScrollMode(isDisplayedAtMainActivity() || _appSettings.getDocumentWrapState(_document.getPath()));
+        setWrapState(isDisplayedAtMainActivity() || _appSettings.getDocumentWrapState(_document.path));
         updateMenuToggleStates(0);
-        // ---------------------------------------------------------
 
-        // Start preview _after_ text load
-        final Bundle args = getArguments();
-        final boolean startInPreview = _appSettings.getDocumentPreviewState(_document.getPath());
-        if (args != null && savedInstanceState == null) { // Use the launch flag on first launch
-            setViewModeVisibility(args.getBoolean(START_PREVIEW, startInPreview));
-        } else {
-            setViewModeVisibility(startInPreview);
-        }
+        // ---------------------------------------------------------
+        _document.resetChangeTracking(); // Force next reload in onResume
 
         final Runnable debounced = TextViewUtils.makeDebounced(500, () -> {
             checkTextChangeState();
@@ -230,11 +234,12 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
 
         // We set the keyboard to be hidden if it was hidden when we lost focus
         // This works well to preserve keyboard state.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        if (activity != null) {
             final Window window = activity.getWindow();
             final int adjustResize = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
             final int unchanged = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED | adjustResize;
             final int hidden = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN | adjustResize;
+            final int shown = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE | adjustResize;
 
             _hlEditor.getViewTreeObserver().addOnWindowFocusChangeListener(hasFocus -> {
                 if (hasFocus) {
@@ -242,39 +247,49 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
                     _hlEditor.postDelayed(() -> window.setSoftInputMode(unchanged), 500);
                 } else {
                     final Boolean isOpen = TextViewUtils.isImeOpen(_hlEditor);
-                    if (isOpen != null && !isOpen) {
-                        window.setSoftInputMode(hidden);
+                    if (isOpen != null) {
+                        window.setSoftInputMode(isOpen ? shown : hidden);
                     }
                 }
             });
         }
+
+        _verticalScrollView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            _hlEditor.post(() -> {
+                final int height = _verticalScrollView.getHeight();
+                if (height != _hlEditor.getMinHeight()) {
+                    _hlEditor.setMinHeight(height);
+                }
+            });
+        });
     }
 
     @Override
-    public void onFragmentFirstTimeVisible() {
-        _primaryScrollView.invalidate();
-        int startPos = _appSettings.getLastEditPosition(_document.getPath(), _hlEditor.length());
-
-        // First start - overwrite start position if needed
-        if (_savedInstanceState == null) {
-            final Bundle args = getArguments();
-            if (args != null && args.containsKey(Document.EXTRA_FILE_LINE_NUMBER)) {
-                final int lno = args.getInt(Document.EXTRA_FILE_LINE_NUMBER);
-                if (lno >= 0) {
-                    startPos = TextViewUtils.getIndexFromLineOffset(_hlEditor.getText(), lno, 0);
-                } else if (lno == Document.EXTRA_FILE_LINE_NUMBER_LAST) {
-                    startPos = _hlEditor.length();
-                }
+    protected void onFragmentFirstTimeVisible() {
+        final Bundle args = getArguments();
+        int startPos = _appSettings.getLastEditPosition(_document.path, _hlEditor.length());
+        if (args != null && args.containsKey(Document.EXTRA_FILE_LINE_NUMBER)) {
+            final int lno = args.getInt(Document.EXTRA_FILE_LINE_NUMBER);
+            if (lno >= 0) {
+                startPos = TextViewUtils.getIndexFromLineOffset(_hlEditor.getText(), lno, 0);
+            } else {
+                startPos = _hlEditor.length();
             }
         }
 
+        _hlEditor.recomputeHighlighting(); // Run before setting scroll position
         TextViewUtils.setSelectionAndShow(_hlEditor, startPos);
+
+        _hlEditor.post(() -> _hlEditor.animate().alpha(1).setDuration(500).start());
     }
 
     @Override
     public void onResume() {
-        loadDocument();
         _webView.onResume();
+        loadDocument();
+        if (_editTextUndoRedoHelper != null && _editTextUndoRedoHelper.getTextView() != _hlEditor) {
+            _editTextUndoRedoHelper.setTextView(_hlEditor);
+        }
         super.onResume();
     }
 
@@ -282,9 +297,13 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
     public void onPause() {
         saveDocument(false);
         _webView.onPause();
-        _appSettings.addRecentDocument(_document.getFile());
-        _appSettings.setDocumentPreviewState(_document.getPath(), _isPreviewVisible);
-        _appSettings.setLastEditPosition(_document.getPath(), _hlEditor.getSelectionStart());
+        _appSettings.addRecentFile(_document.file);
+        _appSettings.setDocumentPreviewState(_document.path, _isPreviewVisible);
+        _appSettings.setLastEditPosition(_document.path, TextViewUtils.getSelection(_hlEditor)[0]);
+
+        if (_document.path.equals(_appSettings.getTodoFile().getAbsolutePath())) {
+            TodoWidgetProvider.updateTodoWidgets();
+        }
         super.onPause();
     }
 
@@ -323,33 +342,35 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         menu.findItem(R.id.submenu_tools).setVisible(isText);
         menu.findItem(R.id.submenu_per_file_settings).setVisible(isText);
 
-        menu.findItem(R.id.action_share_pdf).setVisible(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT);
+        menu.findItem(R.id.action_share_pdf).setVisible(true);
         menu.findItem(R.id.action_share_image).setVisible(true);
         menu.findItem(R.id.action_load_epub).setVisible(isExperimentalFeaturesEnabled);
 
         // SearchView (View Mode)
         _menuSearchViewForViewMode = (SearchView) menu.findItem(R.id.action_search_view).getActionView();
-        _menuSearchViewForViewMode.setSubmitButtonEnabled(true);
-        _menuSearchViewForViewMode.setQueryHint(getString(R.string.search));
-        _menuSearchViewForViewMode.setOnQueryTextFocusChangeListener((v, searchHasFocus) -> {
-            if (!searchHasFocus) {
-                _menuSearchViewForViewMode.setQuery("", false);
-                _menuSearchViewForViewMode.setIconified(true);
-            }
-        });
-        _menuSearchViewForViewMode.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String text) {
-                _webView.findNext(true);
-                return true;
-            }
+        if (_menuSearchViewForViewMode != null) {
+            _menuSearchViewForViewMode.setSubmitButtonEnabled(true);
+            _menuSearchViewForViewMode.setQueryHint(getString(R.string.search));
+            _menuSearchViewForViewMode.setOnQueryTextFocusChangeListener((v, searchHasFocus) -> {
+                if (!searchHasFocus) {
+                    _menuSearchViewForViewMode.setQuery("", false);
+                    _menuSearchViewForViewMode.setIconified(true);
+                }
+            });
+            _menuSearchViewForViewMode.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String text) {
+                    _webView.findNext(true);
+                    return true;
+                }
 
-            @Override
-            public boolean onQueryTextChange(String text) {
-                _webView.findAllAsync(text);
-                return true;
-            }
-        });
+                @Override
+                public boolean onQueryTextChange(String text) {
+                    _webView.findAllAsync(text);
+                    return true;
+                }
+            });
+        }
 
         // Set various initial states
         updateMenuToggleStates(_document.getFormat());
@@ -357,15 +378,53 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         updateUndoRedoIconStates();
     }
 
+    @Override
+    public boolean onReceiveKeyPress(int keyCode, KeyEvent event) {
+        if (_format != null && _format.getActions().onReceiveKeyPress(keyCode, event)) {
+            return true;
+        }
+
+        if (event.isCtrlPressed()) {
+            if (event.isShiftPressed() && keyCode == KeyEvent.KEYCODE_Z) {
+                if (_editTextUndoRedoHelper != null && _editTextUndoRedoHelper.getCanRedo()) {
+                    _hlEditor.withAutoFormatDisabled(_editTextUndoRedoHelper::redo);
+                    updateUndoRedoIconStates();
+                }
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_S) {
+                saveDocument(true);
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_Y) {
+                if (_editTextUndoRedoHelper != null && _editTextUndoRedoHelper.getCanRedo()) {
+                    _hlEditor.withAutoFormatDisabled(_editTextUndoRedoHelper::redo);
+                    updateUndoRedoIconStates();
+                }
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_Z) {
+                if (_editTextUndoRedoHelper != null && _editTextUndoRedoHelper.getCanUndo()) {
+                    _hlEditor.withAutoFormatDisabled(_editTextUndoRedoHelper::undo);
+                    updateUndoRedoIconStates();
+                }
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_SLASH) {
+                setViewModeVisibility(!_isPreviewVisible);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void updateUndoRedoIconStates() {
+        Drawable d;
         final boolean canUndo = _editTextUndoRedoHelper != null && _editTextUndoRedoHelper.getCanUndo();
-        if (_undoMenuItem != null && _undoMenuItem.isEnabled() != canUndo) {
-            _undoMenuItem.setEnabled(canUndo).getIcon().mutate().setAlpha(canUndo ? 255 : 40);
+        if (_undoMenuItem != null && _undoMenuItem.isEnabled() != canUndo && (d = _undoMenuItem.setEnabled(canUndo).getIcon()) != null) {
+            d.mutate().setAlpha(canUndo ? 255 : 40);
         }
 
         final boolean canRedo = _editTextUndoRedoHelper != null && _editTextUndoRedoHelper.getCanRedo();
-        if (_redoMenuItem != null && _redoMenuItem.isEnabled() != canRedo) {
-            _redoMenuItem.setEnabled(canRedo).getIcon().mutate().setAlpha(canRedo ? 255 : 40);
+        if (_redoMenuItem != null && _redoMenuItem.isEnabled() != canRedo && (d = _redoMenuItem.setEnabled(canRedo).getIcon()) != null) {
+            d.mutate().setAlpha(canRedo ? 255 : 40);
         }
     }
 
@@ -385,32 +444,15 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
             }
 
             if (!_document.isContentSame(_hlEditor.getText())) {
-
-                final int[] sel = TextViewUtils.getSelection(_hlEditor);
-                sel[0] = Math.min(sel[0], content.length());
-                sel[1] = Math.min(sel[1], content.length());
-
-                if (_editTextUndoRedoHelper != null) {
-                    _editTextUndoRedoHelper.disconnect();
-                    _editTextUndoRedoHelper.clearHistory();
-                }
-
-                _hlEditor.withAutoFormatDisabled(() -> _hlEditor.setText(content));
-
-                if (_editTextUndoRedoHelper == null) {
-                    _editTextUndoRedoHelper = new TextViewUndoRedo(_hlEditor);
-                } else {
-                    _editTextUndoRedoHelper.setTextView(_hlEditor);
-                }
-
-                _hlEditor.setSelection(sel[0], sel[1]);
-                TextViewUtils.showSelection(_hlEditor);
+                _hlEditor.withAutoFormatDisabled(() -> _hlEditor.setTextKeepState(content));
             }
+
             checkTextChangeState();
 
             if (_isPreviewVisible) {
                 updateViewModeText();
             }
+
             return true;
         }
         return false;
@@ -462,15 +504,19 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
                 setViewModeVisibility(!_isPreviewVisible);
                 return true;
             }
+            case R.id.action_share_path: {
+                _cu.shareText(getActivity(), _document.file.getAbsolutePath(), GsContextUtils.MIME_TEXT_PLAIN);
+                return true;
+            }
             case R.id.action_share_text: {
                 if (saveDocument(false)) {
-                    _cu.shareText(getActivity(), getTextString(), "text/plain");
+                    _cu.shareText(getActivity(), getTextString(), GsContextUtils.MIME_TEXT_PLAIN);
                 }
                 return true;
             }
             case R.id.action_share_file: {
                 if (saveDocument(false)) {
-                    _cu.shareStream(getActivity(), _document.getFile(), "text/plain");
+                    _cu.shareStream(getActivity(), _document.file, GsContextUtils.MIME_TEXT_PLAIN);
                 }
                 return true;
             }
@@ -479,7 +525,7 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
                 if (saveDocument(false)) {
                     TextConverterBase converter = FormatRegistry.getFormat(_document.getFormat(), activity, _document).getConverter();
                     _cu.shareText(getActivity(),
-                            converter.convertMarkup(getTextString(), getActivity(), false, _hlEditor.getLineNumbersEnabled(), _document.getFile()),
+                            converter.convertMarkup(getTextString(), getActivity(), false, _lineNumbersView.isLineNumbersEnabled(), _document.file),
                             "text/" + (item.getItemId() == R.id.action_share_html ? "html" : "plain")
                     );
                 }
@@ -487,7 +533,7 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
             }
             case R.id.action_share_calendar_event: {
                 if (saveDocument(false)) {
-                    if (!_cu.createCalendarAppointment(getActivity(), _document.getTitle(), getTextString(), null)) {
+                    if (!_cu.createCalendarAppointment(getActivity(), _document.title, getTextString(), null)) {
                         Toast.makeText(activity, R.string.no_calendar_app_is_installed, Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -502,10 +548,12 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
                     setViewModeVisibility(true);
                     Toast.makeText(activity, R.string.please_wait, Toast.LENGTH_LONG).show();
                     _webView.postDelayed(() -> {
-                        if (item.getItemId() == R.id.action_share_pdf && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                            _cu.printOrCreatePdfFromWebview(_webView, _document, getTextString().contains("beamer\n"));
-                        } else if (item.getItemId() != R.id.action_share_pdf) {
-                            Bitmap bmp = _cu.getBitmapFromWebView(_webView, item.getItemId() == R.id.action_share_image);
+                        if (itemId == R.id.action_share_pdf) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                _cu.printOrCreatePdfFromWebview(_webView, _document, getTextString().contains("beamer\n"));
+                            }
+                        } else {
+                            Bitmap bmp = _cu.getBitmapFromWebView(_webView, itemId == R.id.action_share_image);
                             _cu.shareImage(getContext(), bmp, null);
                         }
                     }, 7000);
@@ -524,9 +572,9 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
                 if (itemId != _document.getFormat()) {
                     _document.setFormat(itemId);
                     applyTextFormat(itemId);
-                    _appSettings.setDocumentFormat(_document.getPath(), _document.getFormat());
-                    return true;
+                    _appSettings.setDocumentFormat(_document.path, _document.getFormat());
                 }
+                return true;
             }
             case R.id.action_search: {
                 setViewModeVisibility(false);
@@ -560,44 +608,62 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
             }
             case R.id.action_wrap_words: {
                 final boolean newState = !isWrapped();
-                _appSettings.setDocumentWrapState(_document.getPath(), newState);
-                setHorizontalScrollMode(newState);
+                _appSettings.setDocumentWrapState(_document.path, newState);
+                setWrapState(newState);
                 updateMenuToggleStates(0);
                 return true;
             }
             case R.id.action_line_numbers: {
-                final boolean newState = !_hlEditor.getLineNumbersEnabled();
-                _appSettings.setDocumentLineNumbersEnabled(_document.getPath(), newState);
-                _hlEditor.setLineNumbersEnabled(newState);
+                final boolean newState = !_lineNumbersView.isLineNumbersEnabled();
+                _appSettings.setDocumentLineNumbersEnabled(_document.path, newState);
+                _lineNumbersView.setLineNumbersEnabled(newState);
                 updateMenuToggleStates(0);
                 return true;
             }
             case R.id.action_enable_highlighting: {
                 final boolean newState = !_hlEditor.getHighlightingEnabled();
                 _hlEditor.setHighlightingEnabled(newState);
-                _appSettings.setDocumentHighlightState(_document.getPath(), newState);
+                _appSettings.setDocumentHighlightState(_document.path, newState);
                 updateMenuToggleStates(0);
                 return true;
             }
             case R.id.action_enable_auto_format: {
                 final boolean newState = !_hlEditor.getAutoFormatEnabled();
                 _hlEditor.setAutoFormatEnabled(newState);
-                _appSettings.setDocumentAutoFormatEnabled(_document.getPath(), newState);
+                _appSettings.setDocumentAutoFormatEnabled(_document.path, newState);
                 updateMenuToggleStates(0);
                 return true;
             }
             case R.id.action_info: {
                 if (saveDocument(false)) { // In order to have the correct info displayed
-                    FileInfoDialog.show(_document.getFile(), getParentFragmentManager());
+                    FileInfoDialog.show(_document.file, getParentFragmentManager());
                 }
                 return true;
             }
             case R.id.action_set_font_size: {
-                MarkorDialogFactory.showFontSizeDialog(activity, _appSettings.getDocumentFontSize(_document.getPath()), (newSize) -> {
+                MarkorDialogFactory.showFontSizeDialog(activity, _appSettings.getDocumentFontSize(_document.path), (newSize) -> {
                     _hlEditor.setTextSize(TypedValue.COMPLEX_UNIT_SP, (float) newSize);
-                    _appSettings.setDocumentFontSize(_document.getPath(), newSize);
+                    _appSettings.setDocumentFontSize(_document.path, newSize);
                 });
+                return true;
             }
+            case R.id.action_show_file_browser: {
+                // Delay because I want menu to close before we open the file browser
+                _hlEditor.postDelayed(() -> MainActivity.launch(activity, _document.file, false), 250);
+                return true;
+            }
+            case R.id.action_toggle_case:
+                TextViewUtils.toggleSelectionCase(_hlEditor.getText());
+                return true;
+            case R.id.action_switch_case:
+                TextViewUtils.switchSelectionCase(_hlEditor.getText());
+                return true;
+            case R.id.action_capitalize_words:
+                TextViewUtils.capitalizeSelectionWords(_hlEditor.getText());
+                return true;
+            case R.id.action_capitalize_sentences:
+                TextViewUtils.capitalizeSelectionSentences(_hlEditor.getText());
+                return true;
             default: {
                 return super.onOptionsItemSelected(item);
             }
@@ -606,12 +672,14 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
 
     public void checkTextChangeState() {
         final boolean isTextChanged = !_document.isContentSame(_hlEditor.getText());
+        Drawable d;
 
-        if (_saveMenuItem != null && _saveMenuItem.isEnabled() != isTextChanged) {
-            _saveMenuItem.setEnabled(isTextChanged).getIcon().mutate().setAlpha(isTextChanged ? 255 : 40);
+        if (_saveMenuItem != null && _saveMenuItem.isEnabled() != isTextChanged && (d = _saveMenuItem.setEnabled(isTextChanged).getIcon()) != null) {
+            d.mutate().setAlpha(isTextChanged ? 255 : 40);
         }
     }
 
+    @Override
     public void applyTextFormat(final int textFormatId) {
         final Activity activity = getActivity();
         if (activity == null) {
@@ -622,11 +690,38 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         _hlEditor.setHighlighter(_format.getHighlighter());
         _hlEditor.setDynamicHighlightingEnabled(_appSettings.isDynamicHighlightingEnabled());
         _hlEditor.setAutoFormatters(_format.getAutoFormatInputFilter(), _format.getAutoFormatTextWatcher());
-        _hlEditor.setAutoFormatEnabled(_appSettings.getDocumentAutoFormatEnabled(_document.getPath()));
+        _hlEditor.setAutoFormatEnabled(_appSettings.getDocumentAutoFormatEnabled(_document.path));
         _format.getActions()
+                .setDocument(_document)
                 .setUiReferences(activity, _hlEditor, _webView)
                 .recreateActionButtons(_textActionsBar, _isPreviewVisible ? ActionButtonBase.ActionItem.DisplayMode.VIEW : ActionButtonBase.ActionItem.DisplayMode.EDIT);
         updateMenuToggleStates(_format.getFormatId());
+        showHideActionBar();
+    }
+
+    private void showHideActionBar() {
+        final Activity activity = getActivity();
+        if (activity != null) {
+            final View bar = activity.findViewById(R.id.document__fragment__edit__text_actions_bar);
+            final View parent = activity.findViewById(R.id.document__fragment__edit__text_actions_bar__scrolling_parent);
+            final View viewScroll = activity.findViewById(R.id.document__fragment_view_webview);
+
+            if (bar != null && parent != null && _verticalScrollView != null && viewScroll != null) {
+                final boolean hide = _textActionsBar.getChildCount() == 0;
+                parent.setVisibility(hide ? View.GONE : View.VISIBLE);
+                final int marginBottom = hide ? 0 : (int) getResources().getDimension(R.dimen.textactions_bar_height);
+                setMarginBottom(_verticalScrollView, marginBottom);
+                setMarginBottom(viewScroll, marginBottom);
+            }
+        }
+    }
+
+    private void setMarginBottom(final View view, final int marginBottom) {
+        final ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        if (params != null) {
+            params.setMargins(params.leftMargin, params.topMargin, params.rightMargin, marginBottom);
+            view.setLayoutParams(params);
+        }
     }
 
     private void updateMenuToggleStates(final int selectedFormatActionId) {
@@ -638,7 +733,7 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
             mi.setChecked(_hlEditor.getHighlightingEnabled());
         }
         if ((mi = _fragmentMenu.findItem(R.id.action_line_numbers)) != null) {
-            mi.setChecked(_hlEditor.getLineNumbersEnabled());
+            mi.setChecked(_lineNumbersView.isLineNumbersEnabled());
         }
         if ((mi = _fragmentMenu.findItem(R.id.action_enable_auto_format)) != null) {
             mi.setChecked(_hlEditor.getAutoFormatEnabled());
@@ -656,38 +751,52 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
     }
 
     private boolean isWrapped() {
-        return _hsView == null || (_hlEditor.getParent() == _primaryScrollView);
+        return _horizontalScrollView == null || _hlEditor.getParent() != _horizontalScrollView;
     }
 
-    private void setHorizontalScrollMode(final boolean wrap) {
+    private ViewGroup.LayoutParams makeLinearLayoutChildParams() {
+        return new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+    }
 
+    private ViewGroup.LayoutParams makeScrollViewChildParams() {
+        return new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    private void setWrapState(final boolean wrap) {
+        _hlEditor.setHorizontallyScrolling(!wrap);
         final Context context = getContext();
         if (context != null && _hlEditor != null && isWrapped() != wrap) {
 
+            _hlEditor.setAlpha(0);
+
             final int[] sel = TextViewUtils.getSelection(_hlEditor);
+            final boolean hlEnabled = _hlEditor.setHighlightingEnabled(false);
 
-            final boolean hlEnabled = _hlEditor.getHighlightingEnabled();
-            _hlEditor.setHighlightingEnabled(false);
-
-            _primaryScrollView.removeAllViews();
-            if (_hsView != null) {
-                _hsView.removeAllViews();
+            if (_horizontalScrollView == null) {
+                _horizontalScrollView = new HorizontalScrollView(context);
+                _horizontalScrollView.setFillViewport(true);
             }
-            if (!wrap) {
-                if (_hsView == null) {
-                    _hsView = new HorizontalScrollView(context);
-                    _hsView.setFillViewport(true);
-                }
-                _hsView.addView(_hlEditor);
-                _primaryScrollView.addView(_hsView);
+
+            if (wrap) {
+                _horizontalScrollView.removeView(_hlEditor);
+                _editorHolder.removeView(_horizontalScrollView);
+                _hlEditor.setLayoutParams(makeLinearLayoutChildParams());
+                _editorHolder.addView(_hlEditor, 1);
             } else {
-                _primaryScrollView.addView(_hlEditor);
+                _editorHolder.removeView(_hlEditor);
+                _hlEditor.setLayoutParams(makeScrollViewChildParams());
+                _horizontalScrollView.addView(_hlEditor);
+                _horizontalScrollView.setLayoutParams(makeLinearLayoutChildParams());
+                _editorHolder.addView(_horizontalScrollView, 1);
             }
+
+            _hlEditor.requestLayout();
 
             _hlEditor.setHighlightingEnabled(hlEnabled);
-
-            // Run after layout() of immediate parent completes
-            (wrap ? _primaryScrollView : _hsView).post(() -> TextViewUtils.setSelectionAndShow(_hlEditor, sel));
+            _hlEditor.post(() -> {
+                TextViewUtils.setSelectionAndShow(_hlEditor, sel);
+                _hlEditor.post(() -> _hlEditor.animate().alpha(1).setDuration(400).start());
+            });
         }
     }
 
@@ -709,7 +818,7 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
     }
 
     public boolean isSdStatusBad() {
-        if (_cu.isUnderStorageAccessFolder(getContext(), _document.getFile(), false) &&
+        if (_cu.isUnderStorageAccessFolder(getContext(), _document.file, false) &&
                 _cu.getStorageAccessFrameworkTreeUri(getContext()) == null) {
             _cu.showMountSdDialog(getActivity());
             return true;
@@ -722,8 +831,7 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         return (_document == null ||
                 _hlEditor == null ||
                 _appSettings == null ||
-                !_document.testCreateParent() ||
-                !_cu.canWriteFile(getContext(), _document.getFile(), false, true));
+                !_cu.canWriteFile(getContext(), _document.file, false, true));
     }
 
     // Save the file
@@ -760,24 +868,36 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
     }
 
     public void updateViewModeText() {
-        final String text = getTextString();
-        _format.getConverter().convertMarkupShowInWebView(_document, text, getActivity(), _webView, _nextConvertToPrintMode, _hlEditor.getLineNumbersEnabled());
+        // Don't let text to view mode crash app
+        try {
+            _format.getConverter().convertMarkupShowInWebView(_document, getTextString(), getActivity(), _webView, _nextConvertToPrintMode, _lineNumbersView.isLineNumbersEnabled());
+        } catch (OutOfMemoryError e) {
+            _format.getConverter().convertMarkupShowInWebView(_document, "updateViewModeText getTextString(): OutOfMemory  " + e, getActivity(), _webView, _nextConvertToPrintMode, _lineNumbersView.isLineNumbersEnabled());
+        }
     }
 
-    public void setViewModeVisibility(boolean show) {
-        final Activity activity = getActivity();
-        show |= _document.isBinaryFileNoTextLoading();
+    public void setViewModeVisibility(final boolean show) {
+        setViewModeVisibility(show, true);
+    }
 
+    public void setViewModeVisibility(boolean show, final boolean animate) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        show |= _document.isBinaryFileNoTextLoading();
         _format.getActions().recreateActionButtons(_textActionsBar, show ? ActionButtonBase.ActionItem.DisplayMode.VIEW : ActionButtonBase.ActionItem.DisplayMode.EDIT);
+        showHideActionBar();
         if (show) {
             updateViewModeText();
             _cu.showSoftKeyboard(activity, false, _hlEditor);
             _hlEditor.clearFocus();
             _hlEditor.postDelayed(() -> _cu.showSoftKeyboard(activity, false, _hlEditor), 300);
-            fadeInOut(_webView, _primaryScrollView);
+            GsContextUtils.fadeInOut(_webView, _verticalScrollView, animate);
         } else {
             _webViewClient.setRestoreScrollY(_webView.getScrollY());
-            fadeInOut(_primaryScrollView, _webView);
+            GsContextUtils.fadeInOut(_verticalScrollView, _webView, animate);
         }
 
         _nextConvertToPrintMode = false;
@@ -797,26 +917,11 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         }
     }
 
-    private static boolean fadeInOut(final View in, final View out) {
-        // Do nothing if we are already in the correct state
-        if (in.getVisibility() == View.VISIBLE && out.getVisibility() == View.GONE) {
-            return false;
+    @Override
+    protected void onToolbarClicked(View v) {
+        if (_format != null) {
+            _format.getActions().runTitleClick();
         }
-
-        in.setAlpha(0);
-        in.setVisibility(View.VISIBLE);
-        in.animate().alpha(1).setDuration(200).setListener(null);
-        out.animate()
-                .alpha(0)
-                .setDuration(200)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        out.setVisibility(View.GONE);
-                    }
-                });
-
-        return true;
     }
 
     @Override
@@ -828,21 +933,6 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         return false;
     }
 
-    public Document getDocument() {
-        return _document;
-    }
-
-    public WebView getWebview() {
-        return _webView;
-    }
-
-    @Override
-    protected void onToolbarClicked(View v) {
-        if (!_isPreviewVisible && _format != null) {
-            _format.getActions().runTitleClick();
-        }
-    }
-
     @Override
     public void onDestroy() {
         try {
@@ -851,6 +941,14 @@ public class DocumentEditAndViewFragment extends MarkorBaseFragment implements F
         } catch (Exception ignored) {
         }
         super.onDestroy();
+    }
+
+    public Document getDocument() {
+        return _document;
+    }
+
+    public HighlightingEditor getEditor() {
+        return _hlEditor;
     }
 
     public String getTextString() {

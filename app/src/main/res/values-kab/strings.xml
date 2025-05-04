@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -61,7 +61,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="hide_statusbar">Ffer afeggag n waddad</string>
     <string name="name">Isem</string>
     <string name="url_or_path">URL / Abrid</string>
-    <string name="insert_link">Ger aseɣwen</string>
     <string name="insert_image">Ger tugna</string>
     <string name="contributors">Iwiziwen</string>
     <string name="select_storage_folder">Fren akaram ara tesqedceḍ i usekles</string>
@@ -161,6 +160,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">Turagt n usenfaṛ</string>
     <string name="contribute_code_to_this_project_anybody_welcome">Ɛeddet amsukkel i usenfar. Anṣuf yes-sen akk ad xedmen aya, ama d wid i d-yusan d imaynuten</string>
     <string name="project_team">Tarbaɛt n usenfaṛ</string>
+    <string name="community">Tamezdagnut</string>
     <string name="contributors_public_add_yourself_description">Ssken tilɣa n umeddakel. Efk-it-id ad d-tbanen dagi deg yiwen n opt-in deffir n uddukkel</string>
     <string name="location">Asun</string>
     <string name="text_lines">Izirigen n uḍris</string>

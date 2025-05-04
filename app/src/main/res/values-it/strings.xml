@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
 
 To the extent possible under law, the person who associated CC0 with
 this file has waived all copyright and related or neighboring rights
@@ -27,7 +27,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="create_folder">Crea una nuova cartella</string>
     <string name="create_new_document">Crea un nuovo documento</string>
     <string name="move">Sposta</string>
-    <string name="copy">Copia</string>
     <string name="info">Informazioni</string>
     <string name="file_folder_already_exists_please_use_a_different_name">File/cartella già esistente! Si prega di usare un nome diverso</string>
     <string name="import_from_device">Importa dal dispositivo</string>
@@ -60,6 +59,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="last_modified">Ultima modifica</string>
     <string name="select_this_folder">Seleziona questa cartella</string>
     <string name="select">Seleziona</string>
+    <string name="select_all">Seleziona tutto</string>
     <string name="create">Crea</string>
     <string name="select_entries">Seleziona elementi</string>
     <string name="one_item_selected">Un elemento selezionato</string>
@@ -69,6 +69,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="name">Nome</string>
     <string name="url_or_path">URL / Percorso</string>
     <string name="insert_link">Inserisci collegamento</string>
+    <string name="format_link">Formatta collegamento</string>
     <string name="insert_image">Inserisci immagine</string>
     <string name="contributors">Collaboratori</string>
     <string name="save_location">Percorso di salvataggio</string>
@@ -179,15 +180,18 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="asciidoc_special_key">Contenuto speciale AsciiDoc</string>
     <string name="key_page_up">Pagina superiore (tasto Up)</string>
     <string name="key_page_down">Pagina inferiore (tasto Down)</string>
-    <string name="move_text_one_line_up">Sposta il testo una riga in su</string>
-    <string name="move_text_one_line_down">Sposta il testo una riga in giù</string>
-    <string name="start_new_line_below">Inizia una nuova riga sotto</string>
     <string name="key_pos_1">Inizio della linea (tasto Home)</string>
     <string name="key_pos_end">Fine della linea (tasto End)</string>
     <string name="key_pos_1_document">Inizio del documento</string>
     <string name="key_pos_end_document">Fine del documento</string>
+    <string name="move_text_one_line_up">Sposta la riga in su</string>
+    <string name="move_text_one_line_down">Sposta la riga in giù</string>
+    <string name="start_new_line_below">Nuova riga sotto</string>
+    <string name="select_current_line">Seleziona la riga corrente</string>
     <string name="key_ctrl_a">Seleziona tutto (Ctrl + A)</string>
     <string name="key_tab">Tabulatore</string>
+    <string name="zero_width_space">Spazio a larghezza zero</string>
+    <string name="em_space">Spaziatura em (&amp;emsp;)</string>
     <string name="start_on_bottom">Inizia dal basso</string>
     <string name="start_on_bottom_when_loading_document">Dopo che un documento è stato caricato, posiziona il cursore alla fine</string>
     <string name="unordered_list_character">Carattere per liste non ordinate</string>
@@ -215,11 +219,13 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="edit_text_in_center_of_screen">Modifica il testo al centro dello schermo</string>
     <string name="clipboard">Appunti</string>
     <string name="select_existing_document">Seleziona documento esistente</string>
+    <string name="select_create_document">Seleziona o crea un documento</string>
     <string name="open_source_licenses">Licenze Open Source</string>
     <string name="rate_this_app">Valuta l\'app</string>
     <string name="translate">Traduci</string>
     <string name="more_info_and_help">Più informazioni e aiuto</string>
     <string name="report_bugs">Segnala un bug</string>
+    <string name="do_you_have_a_question_or_problem">Hai domande o problemi?</string>
     <string name="join_community">Unisciti alla comunità</string>
     <string name="bug_reports_suggest_improvements">Dai un riscontro, segnala bug o suggerisci miglioramenti</string>
     <string name="help_translating_this_app">Traduci l\'applicazoine in altre lingue</string>
@@ -227,6 +233,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="project_license">Licenza del progetto</string>
     <string name="contribute_code_to_this_project_anybody_welcome">Contribuisci al codice del progetto. Tutti sono invitati a farlo, anche i nuovi arrivati</string>
     <string name="project_team">Team del progetto</string>
+    <string name="community">Comunità</string>
     <string name="contributors_public_add_yourself_description">Mostra informazioni sui contributori.
 
   I contributori possono fornire informazioni per essere mostrati qui (opt-in) dopo aver contribuito</string>
@@ -257,7 +264,6 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="no_calendar_app_is_installed">Nessuna app calendario installata!</string>
     <string name="popular_documents">Documenti popolari</string>
     <string name="color">Colore</string>
-    <string name="zero_width_space">Spazio a larghezza zero</string>
     <string name="basic_color_scheme">Schema dei colori di base</string>
     <string name="background_foreground_color_in_editor_works_dark_light">Cambia il colore di sfondo e di primo piano dell\'editor di testo. Si adegua al tema dell\'applicazione, al tema chiaro o scuro. I colori dell\'evidenziazione della sintassi rimangono gli stessi.</string>
     <string name="preset">Predefinito</string>
@@ -275,7 +281,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="pick_date">Scegli la data</string>
     <string name="pick_time">Scegli l\'ora</string>
     <string name="get_format_instead_date_or_time">Ottieni il formato invece della data o dell\'ora</string>
-    <string name="always_use_current_date_and_time">Usa sempre la date e ora attuale</string>
+    <string name="use_current_date_and_time">Usa data e ora attuali</string>
     <string name="result">Risultato</string>
     <string name="just_time">Solo l\'ora</string>
     <string name="just_date">Solo la data</string>
@@ -318,7 +324,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="wrap_words">Parole a capo</string>
     <string name="line_numbers">Numeri di riga</string>
     <string name="soft_break_if_not_fit_to_width_else_enable_horizontal_scrolling">Manda a capo il testo se supera la dimensione della riga; altrimenti abilita lo scorrimento orizzontale.</string>
-    <string name="recursive_search_in_current_directory">Ricerca ricorsiva nella directory corrente.</string>
+    <string name="recursive_search_in_location">Ricerca ricorsiva in %s</string>
     <string name="always_open_with_this_app">Apri sempre con quest\'app</string>
     <string name="always_open_files_with_this_app_when_list_contains_file_extension">Apri sempre i file con questa app quando la lista contiene l\'estensione del file. Usa \'Nessuno, .html, .css , .js\' per esempio se si desidera modificare i file web e i file senza estensione.</string>
     <string name="open_file_with">Apri file con</string>
@@ -341,6 +347,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="how_much_columns_press_table_button_long_to_start_table">Quante colonne? Premi a lungo il pulsante tabella per creare una tabella (inserisce intestazione), premilo brevemente per aggiungere una riga.</string>
     <string name="example_of_a_markdown_table">Esempio di tabella Markdown</string>
     <string name="delete_lines">Elimina righe</string>
+    <string name="duplicate_lines">Righe duplicate</string>
     <string name="unordered_list">Elenco non ordinato</string>
     <string name="ordered_list">Elenco ordinato</string>
     <string name="check_list">Checklist</string>
@@ -369,6 +376,7 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="archive_completed_tasks">Archivia attività completate</string>
     <string name="create_new_file_or_folder">Crea un nuovo file o cartella</string>
     <string name="choose_format">Scegli il formato</string>
+    <string name="clear_selection">Cancella selezione</string>
     <string name="selected">Selezionati</string>
     <string name="back">Indietro</string>
     <string name="expand_collapse">Espandi / Comprimi</string>
@@ -447,9 +455,17 @@ work. If not, see <https://creativecommons.org/publicdomain/zero/1.0/>.
     <string name="attachment_folder_name_desc">Sottocartella in cui verranno salvati gli allegati. Se lasciato in bianco, gli allegati verranno salvati nella cartella attuale.</string>
     <string name="auto_format">Autoformattazione</string>
     <string name="insert_snippet">Inserisci snippet</string>
+    <string name="snippet_directory">Cartella per snippet / template</string>
     <string name="error_could_not_open_file">Errore: impossibile aprire il file.</string>
     <string name="document_error_clip">Trovato errore: Testo copiato negli appunti.</string>
     <string name="wont_save_min_length">I file di meno di %d caratteri non sono salvati automaticamente, per evitare perdita di dati.</string>
     <string name="advanced_filtering_help"><![CDATA[<small><a href="https://www.github.com/gsantner/markor/discussions/1940">Sintassi filtri avanzata</a></small>]]></string>
     <string name="filter">Filtro</string>
+    <string name="text_case">maiuscolo/minuscolo</string>
+    <string name="toggle_case">In maiuscolo o minuscolo (Es.: Nota-&gt;NOTA-&gt;nota)</string>
+    <string name="switch_case">Inverti maiuscolo/minuscolo (Es: NoTa-&gt;nOtA)</string>
+    <string name="capitalize_words">Iniziali maiuscole (es.: una nota -&gt; Una Nota)</string>
+    <string name="capitalize_sentences">Prima lettera maiuscola (Es.: noi -&gt;Noi)</string>
+    <string name="use_tab_to_indent">Indenta le righe col tasto TAB</string>
+    <string name="folder_local">Cartella locale</string>
 </resources>

@@ -1,6 +1,6 @@
 /*#######################################################
  *
- *   Maintained 2017-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2017-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -8,6 +8,7 @@
 package net.gsantner.markor.activity;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,6 +32,7 @@ import net.gsantner.markor.frontend.filebrowser.MarkorFileBrowserFactory;
 import net.gsantner.markor.model.AppSettings;
 import net.gsantner.markor.util.BackupUtils;
 import net.gsantner.markor.util.MarkorContextUtils;
+import net.gsantner.markor.widget.TodoWidgetProvider;
 import net.gsantner.opoc.frontend.base.GsActivityBase;
 import net.gsantner.opoc.frontend.base.GsPreferenceFragmentBase;
 import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserOptions;
@@ -117,10 +119,10 @@ public class SettingsActivity extends MarkorBaseActivity {
         @SuppressWarnings("rawtypes")
         protected void onPreferenceScreenChanged(PreferenceFragmentCompat preferenceFragmentCompat, PreferenceScreen preferenceScreen) {
             super.onPreferenceScreenChanged(preferenceFragmentCompat, preferenceScreen);
-            if (!TextUtils.isEmpty(preferenceScreen.getTitle())) {
-                if (getActivity() instanceof GsActivityBase && ((GsActivityBase) getActivity()).getToolbar() != null) {
-                    ((GsActivityBase) getActivity()).getToolbar().setTitle(preferenceScreen.getTitle());
-                }
+            final CharSequence title = preferenceScreen.getTitle();
+            final Activity activity = getActivity();
+            if (activity instanceof GsActivityBase && !TextUtils.isEmpty(title)) {
+                ((GsActivityBase<?, ?>) activity).setToolbarText(title);
             }
         }
     }
@@ -165,6 +167,8 @@ public class SettingsActivity extends MarkorBaseActivity {
                     getString(R.string.app_drawer_launcher_special_files_description), true
             );
             updateSummary(R.string.pref_key__exts_to_always_open_in_this_app, _appSettings.getString(R.string.pref_key__exts_to_always_open_in_this_app, ""));
+
+            updateSummary(R.string.pref_key__snippet_directory_path, _appSettings.getSnippetsDirectory().getAbsolutePath());
 
             final String fileDescFormat = _appSettings.getString(R.string.pref_key__file_description_format, "");
             if (fileDescFormat.equals("")) {
@@ -229,16 +233,33 @@ public class SettingsActivity extends MarkorBaseActivity {
                 }
             } else if (eq(key, R.string.pref_key__notebook_directory, R.string.pref_key__quicknote_filepath, R.string.pref_key__todo_filepath)) {
                 WrMarkorWidgetProvider.updateLauncherWidgets();
+                TodoWidgetProvider.updateTodoWidgets();
             }
         }
 
         @Override
         @SuppressWarnings({"ConstantConditions", "ConstantIfStatement", "StatementWithEmptyBody"})
         public Boolean onPreferenceClicked(Preference preference, String key, int keyResId) {
+            final FragmentManager fragManager = getActivity().getSupportFragmentManager();
             switch (keyResId) {
+                case R.string.pref_key__snippet_directory_path: {
+                    MarkorFileBrowserFactory.showFolderDialog(new GsFileBrowserOptions.SelectionListenerAdapter() {
+                        @Override
+                        public void onFsViewerSelected(String request, File file, final Integer lineNumber) {
+                            _appSettings.setSnippetDirectory(file);
+                            doUpdatePreferences();
+                        }
+
+                        @Override
+                        public void onFsViewerConfig(GsFileBrowserOptions.Options dopt) {
+                            dopt.titleText = R.string.snippet_directory;
+                            dopt.rootFolder = _appSettings.getNotebookDirectory();
+                        }
+                    }, fragManager, getActivity());
+                    return true;
+                }
 
                 case R.string.pref_key__notebook_directory: {
-                    FragmentManager fragManager = getActivity().getSupportFragmentManager();
                     MarkorFileBrowserFactory.showFolderDialog(new GsFileBrowserOptions.SelectionListenerAdapter() {
                         @Override
                         public void onFsViewerSelected(String request, File file, final Integer lineNumber) {
@@ -256,7 +277,6 @@ public class SettingsActivity extends MarkorBaseActivity {
                     return true;
                 }
                 case R.string.pref_key__quicknote_filepath: {
-                    FragmentManager fragManager = getActivity().getSupportFragmentManager();
                     MarkorFileBrowserFactory.showFileDialog(new GsFileBrowserOptions.SelectionListenerAdapter() {
                         @Override
                         public void onFsViewerSelected(String request, File file, final Integer lineNumber) {
@@ -269,12 +289,12 @@ public class SettingsActivity extends MarkorBaseActivity {
                         public void onFsViewerConfig(GsFileBrowserOptions.Options dopt) {
                             dopt.titleText = R.string.quicknote;
                             dopt.rootFolder = _appSettings.getNotebookDirectory();
+                            dopt.newDirButtonEnable = false;
                         }
                     }, fragManager, getActivity(), MarkorFileBrowserFactory.IsMimeText);
                     return true;
                 }
                 case R.string.pref_key__todo_filepath: {
-                    FragmentManager fragManager = getActivity().getSupportFragmentManager();
                     MarkorFileBrowserFactory.showFileDialog(new GsFileBrowserOptions.SelectionListenerAdapter() {
                         @Override
                         public void onFsViewerSelected(String request, File file, final Integer lineNumber) {
@@ -287,6 +307,7 @@ public class SettingsActivity extends MarkorBaseActivity {
                         public void onFsViewerConfig(GsFileBrowserOptions.Options dopt) {
                             dopt.titleText = R.string.todo;
                             dopt.rootFolder = _appSettings.getNotebookDirectory();
+                            dopt.newDirButtonEnable = false;
                         }
                     }, fragManager, getActivity(), MarkorFileBrowserFactory.IsMimeText);
                     return true;

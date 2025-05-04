@@ -1,6 +1,6 @@
 /*#######################################################
  *
- *   Maintained 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -10,10 +10,10 @@ package net.gsantner.markor.format;
 import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
-import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.webkit.WebView;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import net.gsantner.markor.ApplicationObject;
@@ -104,16 +104,15 @@ public abstract class TextConverterBase {
             final Activity context,
             final WebView webView,
             final boolean lightMode,
-            final boolean lineNum
-    ) {
+            final boolean lineNum) {
         String html;
         try {
-            html = convertMarkup(content, context, lightMode, lineNum, document.getFile());
+            html = convertMarkup(content, context, lightMode, lineNum, document.file);
         } catch (Exception e) {
             html = "Please report at project issue tracker: " + e;
         }
 
-        String parent = document.getFile().getParent();
+        String parent = document.file.getParent();
         if (parent == null) {
             parent = _appSettings.getNotebookDirectory().getAbsolutePath();
         }
@@ -200,11 +199,11 @@ public abstract class TextConverterBase {
         return CONTENT_TYPE_HTML;
     }
 
-    public boolean isFileOutOfThisFormat(String filepath) {
-        String extWithDot = filepath.replace(JavaPasswordbasedCryption.DEFAULT_ENCRYPTION_EXTENSION, "").replaceAll(".*\\.", ".").toLowerCase();
-        extWithDot = TextUtils.isEmpty(extWithDot) || extWithDot.startsWith(".") ? extWithDot : "";
-        return isFileOutOfThisFormat(filepath, extWithDot);
+    public boolean isFileOutOfThisFormat(final @NonNull File file) {
+        final String name = file.getName().toLowerCase().replace(JavaPasswordbasedCryption.DEFAULT_ENCRYPTION_EXTENSION, "").trim();
+        final String extWithDot = GsFileUtils.getFilenameExtension(name);
+        return isFileOutOfThisFormat(file, name, extWithDot);
     }
 
-    protected abstract boolean isFileOutOfThisFormat(String filepath, String extWithDot);
+    protected abstract boolean isFileOutOfThisFormat(final File file, final String name, final String ext);
 }

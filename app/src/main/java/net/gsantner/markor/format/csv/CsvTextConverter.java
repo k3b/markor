@@ -27,8 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-
-import other.de.stanetz.jpencconverter.JavaPasswordbasedCryption;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Part of Markor-Architecture implementing Preview/Export for csv.
@@ -41,6 +41,9 @@ import other.de.stanetz.jpencconverter.JavaPasswordbasedCryption;
  */
 @SuppressWarnings("WeakerAccess")
 public class CsvTextConverter extends MarkdownTextConverter {
+
+    final List<String> EXT = Arrays.asList(".csv", ".tsv", ".tab", ".psv");
+
     @Override
     public String convertMarkup(String csvMarkup, Context context, boolean lightMode, boolean lineNum, File file) {
         String mdMarkup = Csv2MdTable.toMdTable(csvMarkup);
@@ -48,9 +51,8 @@ public class CsvTextConverter extends MarkdownTextConverter {
     }
 
     @Override
-    protected boolean isFileOutOfThisFormat(String filepath, String extWithDot) {
-        filepath = filepath.replace(JavaPasswordbasedCryption.DEFAULT_ENCRYPTION_EXTENSION, "");
-        return filepath.toLowerCase().endsWith(".csv");
+    protected boolean isFileOutOfThisFormat(final File file, final String name, final String ext) {
+        return EXT.contains(ext);
     }
 
     protected static class Csv2MdTable implements Closeable {

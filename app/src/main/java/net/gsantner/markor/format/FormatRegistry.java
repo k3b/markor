@@ -1,6 +1,6 @@
 /*#######################################################
  *
- *   Maintained 2018-2023 by Gregor Santner <gsantner AT mailbox DOT org>
+ *   Maintained 2018-2025 by Gregor Santner <gsantner AT mailbox DOT org>
  *   License of this file: Apache 2.0
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -12,6 +12,7 @@ import android.text.InputFilter;
 import android.text.TextWatcher;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 
 import net.gsantner.markor.ApplicationObject;
 import net.gsantner.markor.R;
@@ -28,6 +29,7 @@ import net.gsantner.markor.format.markdown.MarkdownReplacePatternGenerator;
 import net.gsantner.markor.format.markdown.MarkdownSyntaxHighlighter;
 import net.gsantner.markor.format.markdown.MarkdownTextConverter;
 import net.gsantner.markor.format.orgmode.OrgmodeActionButtons;
+import net.gsantner.markor.format.orgmode.OrgmodeReplacePatternGenerator;
 import net.gsantner.markor.format.orgmode.OrgmodeSyntaxHighlighter;
 import net.gsantner.markor.format.orgmode.OrgmodeTextConverter;
 import net.gsantner.markor.format.plaintext.PlaintextActionButtons;
@@ -48,7 +50,8 @@ import net.gsantner.markor.model.AppSettings;
 import net.gsantner.markor.model.Document;
 
 import java.io.File;
-import java.util.Locale;
+import java.util.Arrays;
+import java.util.List;
 
 public class FormatRegistry {
     public static final int FORMAT_UNKNOWN = 0;
@@ -74,28 +77,41 @@ public class FormatRegistry {
     public final static OrgmodeTextConverter CONVERTER_ORGMODE = new OrgmodeTextConverter();
 
 
+    public static class Format {
+        public final @StringRes int format, name;
+        public final String defaultExtensionWithDot;
+        public final TextConverterBase converter;
+
+        public Format(@StringRes final int a_format, @StringRes final int a_name, final String a_defaultFileExtension, final TextConverterBase a_converter) {
+            format = a_format;
+            name = a_name;
+            defaultExtensionWithDot = a_defaultFileExtension;
+            converter = a_converter;
+        }
+    }
+
     // Order here is used to **determine** format by it's file extension and/or content heading
-    private final static TextConverterBase[] CONVERTERS = new TextConverterBase[]{
-            CONVERTER_MARKDOWN,
-            CONVERTER_CSV,
-            CONVERTER_TODOTXT,
-            CONVERTER_WIKITEXT,
-            CONVERTER_KEYVALUE,
-            CONVERTER_ASCIIDOC,
-            CONVERTER_PLAINTEXT,
-            CONVERTER_EMBEDBINARY,
-            CONVERTER_ORGMODE,
-    };
+    public static final List<Format> FORMATS = Arrays.asList(
+            new Format(FormatRegistry.FORMAT_MARKDOWN, R.string.markdown, ".md", CONVERTER_MARKDOWN),
+            new Format(FormatRegistry.FORMAT_TODOTXT, R.string.todo_txt, ".todo.txt", CONVERTER_TODOTXT),
+            new Format(FormatRegistry.FORMAT_CSV, R.string.csv, ".csv", CONVERTER_CSV),
+            new Format(FormatRegistry.FORMAT_WIKITEXT, R.string.wikitext, ".txt", CONVERTER_WIKITEXT),
+            new Format(FormatRegistry.FORMAT_KEYVALUE, R.string.key_value, ".json", CONVERTER_KEYVALUE),
+            new Format(FormatRegistry.FORMAT_ASCIIDOC, R.string.asciidoc, ".adoc", CONVERTER_ASCIIDOC),
+            new Format(FormatRegistry.FORMAT_ORGMODE, R.string.orgmode, ".org", CONVERTER_ORGMODE),
+            new Format(FormatRegistry.FORMAT_EMBEDBINARY, R.string.embed_binary, ".jpg", CONVERTER_EMBEDBINARY),
+            new Format(FormatRegistry.FORMAT_PLAIN, R.string.plaintext, ".txt", CONVERTER_PLAINTEXT),
+            new Format(FormatRegistry.FORMAT_UNKNOWN, R.string.none, "", null)
+    );
 
     public static boolean isFileSupported(final File file, final boolean... textOnly) {
-        boolean textonly = textOnly != null && textOnly.length > 0 && textOnly[0];
+        final boolean textonly = textOnly != null && textOnly.length > 0 && textOnly[0];
         if (file != null) {
-            final String filepath = file.getAbsolutePath().toLowerCase(Locale.ROOT);
-            for (TextConverterBase converter : CONVERTERS) {
-                if (textonly && converter instanceof EmbedBinaryTextConverter) {
+            for (final Format format : FORMATS) {
+                if (textonly && format.converter instanceof EmbedBinaryTextConverter) {
                     continue;
                 }
-                if (converter.isFileOutOfThisFormat(filepath)) {
+                if (format.converter != null && format.converter.isFileOutOfThisFormat(file)) {
                     return true;
                 }
             }
@@ -169,8 +185,8 @@ public class FormatRegistry {
                 format._converter = CONVERTER_ORGMODE;
                 format._highlighter = new OrgmodeSyntaxHighlighter(appSettings);
                 format._textActions = new OrgmodeActionButtons(context, document);
-                format._autoFormatInputFilter = new AutoTextFormatter(MarkdownReplacePatternGenerator.formatPatterns);
-                format._autoFormatTextWatcher = new ListHandler(MarkdownReplacePatternGenerator.formatPatterns);
+                format._autoFormatInputFilter = new AutoTextFormatter(OrgmodeReplacePatternGenerator.formatPatterns);
+                format._autoFormatTextWatcher = new ListHandler(OrgmodeReplacePatternGenerator.formatPatterns);
                 break;
             }
             default:

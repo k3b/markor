@@ -1,7 +1,7 @@
 /*#######################################################
  * Copyright (c) 2014 Jeff Martin
  * Copyright (c) 2015 Pedro Lafuente
- * Copyright (c) 2017-2023 Gregor Santner
+ * Copyright (c) 2017-2025 Gregor Santner
  *
  * Licensed under the MIT license.
  * You can get a copy of the license text here:
@@ -20,6 +20,7 @@ import net.gsantner.markor.ApplicationObject;
 import net.gsantner.markor.R;
 import net.gsantner.markor.activity.MarkorBaseActivity;
 import net.gsantner.markor.frontend.filebrowser.MarkorFileBrowserFactory;
+import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserListAdapter;
 import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserOptions;
 
 import java.io.File;
@@ -65,9 +66,15 @@ public class WrWidgetConfigure extends MarkorBaseActivity {
             @Override
             public void onFsViewerConfig(GsFileBrowserOptions.Options dopt) {
                 dopt.titleText = R.string.select_folder;
-                dopt.rootFolder = ApplicationObject.settings().getNotebookDirectory();
+                dopt.rootFolder = GsFileBrowserListAdapter.VIRTUAL_STORAGE_ROOT;
             }
-        }, fragManager, this);
+
+            @Override
+            public void onFsViewerCancel(final String request) {
+                finish();
+            }
+
+        }, getSupportFragmentManager(), this);
     }
 
     public static File getWidgetDirectory(final Context context, int id) {

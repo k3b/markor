@@ -30,7 +30,6 @@ If you have questions or found an issue please head to the [Markor project](http
 * [**FAQ**](README.md#FAQ)
   * [File browser, file management](README.md#file-browser--file-management)
   * [Format: Markdown](README.md#format-markdown)
-  * [Format: Markdown](README.md#format-markdown)
   * [Format: todo.txt](README.md#format-todotxt)
 * [**More**](doc)
   * [Synced plaintext TODO and notes - Vim / Vimwiki, Markor Android, Syncthing, GTD (Pitt)](doc/2020-09-26-vimwiki-sync-plaintext-to-do-and-notes-todotxt-markdown.md#readme)
@@ -1187,7 +1186,7 @@ Do you want multiple Notebooks? Favourite multiple folders and set the start fol
 * Two first-time-contributors and zero previous contributors improved the source code of the Markor project in this update. [Learn how you can improve the project by code](https://github.com/gsantner/markor#contributions)
 * In this update totally 72 commits were made, 130 changed files, 5.001 additions and 2.249 deletions.
 * There were totally 7 minor releases in prepartion of this update.
-* 36 new strings were added for translation. 67 contributors are now translating the Markor project. [Help by translating Markor into your language](https://crowdin.com/project/markor/invite).  
+* 36 new strings were added for translation. 67 contributors are now translating the Markor project. [Help by translating Markor into your language](https://crowdin.com/project/markor).  
 
 
 
