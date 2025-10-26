@@ -11,7 +11,6 @@ package net.gsantner.opoc.frontend.base;
 
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -44,8 +43,11 @@ public abstract class GsActivityBase<AS extends GsSharedPreferencesPropertyBacke
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        onPreCreate(savedInstanceState);
         super.onCreate(savedInstanceState);
+
+        _savedInstanceState = savedInstanceState;
+        _appSettings = createAppSettingsInstance();
+        _cu = createContextUtilsInstance();
 
         m_setActivityBackgroundColor.callback();
         m_setActivityNavigationBarColor.callback();
@@ -61,21 +63,19 @@ public abstract class GsActivityBase<AS extends GsSharedPreferencesPropertyBacke
             } catch (Exception ignored) {
             }
         }
+
+        // Setup the call to toolbar click events
+        // Do this every time the activity is created, to accommodate lifecycle changes
+        final Toolbar toolbar = getToolbar();
+        if (toolbar != null) {
+            toolbar.setOnClickListener(this::onToolbarClick);
+            toolbar.setOnLongClickListener(this::onToolbarLongClick);
+        }
     }
 
-    protected void onPreCreate(@Nullable Bundle savedInstanceState) {
-        _savedInstanceState = savedInstanceState;
-        _appSettings = createAppSettingsInstance(this);
-        _cu = createContextUtilsInstance(this);
-    }
+    protected abstract AS createAppSettingsInstance();
 
-    public AS createAppSettingsInstance(Context applicationContext) {
-        return null;
-    }
-
-    public CU createContextUtilsInstance(Context applicationContext) {
-        return null;
-    }
+    protected abstract CU createContextUtilsInstance();
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -88,6 +88,14 @@ public abstract class GsActivityBase<AS extends GsSharedPreferencesPropertyBacke
         super.onResume();
         m_setActivityBackgroundColor.callback();
         m_setActivityNavigationBarColor.callback();
+
+        // Setup the call to toolbar click events
+        // Do this every time the activity is created, to accommodate lifecycle changes
+        final Toolbar toolbar = getToolbar();
+        if (toolbar != null) {
+            toolbar.setOnClickListener(this::onToolbarClick);
+            toolbar.setOnLongClickListener(this::onToolbarLongClick);
+        }
     }
 
     @Override
@@ -103,12 +111,6 @@ public abstract class GsActivityBase<AS extends GsSharedPreferencesPropertyBacke
      * This will be called when this activity gets the first time visible
      */
     public void onActivityFirstTimeVisible() {
-        // Setup the call to toolbar click events
-        final Toolbar toolbar = getToolbar();
-        if (toolbar != null) {
-            toolbar.setOnClickListener(this::onToolbarClick);
-            toolbar.setOnLongClickListener(this::onToolbarLongClick);
-        }
     }
 
     private void onToolbarClick(final View v) {
@@ -189,5 +191,9 @@ public abstract class GsActivityBase<AS extends GsSharedPreferencesPropertyBacke
         if (toolbar != null) {
             toolbar.setTitle(text);
         }
+    }
+
+    public AS getAppSettings() {
+        return _appSettings;
     }
 }

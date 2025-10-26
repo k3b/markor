@@ -40,7 +40,6 @@ import android.text.TextUtils;
 import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -70,15 +69,10 @@ public class GsSharedPreferencesPropertyBackend implements GsPropertyBackend<Str
     protected String _prefAppName;
     protected Context _context;
 
-    public GsSharedPreferencesPropertyBackend init(final Context context) {
-        return init(context, SHARED_PREF_APP);
-    }
-
-    public GsSharedPreferencesPropertyBackend init(final Context context, final String prefAppName) {
+    public GsSharedPreferencesPropertyBackend(final Context context, final String prefAppName) {
         _context = context;
         _prefAppName = !TextUtils.isEmpty(prefAppName) ? prefAppName : (_context.getPackageName() + "_preferences");
         _prefApp = _context.getSharedPreferences(_prefAppName, Context.MODE_PRIVATE);
-        return this;
     }
 
     //
@@ -166,7 +160,7 @@ public class GsSharedPreferencesPropertyBackend implements GsPropertyBackend<Str
     }
 
     public int rcolor(@ColorRes int resColorId) {
-        return ContextCompat.getColor(_context, resColorId);
+        return _context.getResources().getColor(resColorId);
     }
 
     public String[] rstrs(int... keyResourceIds) {

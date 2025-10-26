@@ -26,7 +26,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 
-import net.gsantner.markor.ApplicationObject;
 import net.gsantner.markor.R;
 import net.gsantner.markor.format.FormatRegistry;
 import net.gsantner.markor.format.markdown.MarkdownActionButtons;
@@ -38,6 +37,7 @@ import net.gsantner.markor.util.MarkorContextUtils;
 import net.gsantner.opoc.format.GsTextUtils;
 import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserListAdapter;
 import net.gsantner.opoc.frontend.filebrowser.GsFileBrowserOptions;
+import net.gsantner.opoc.util.GsContextUtils;
 import net.gsantner.opoc.util.GsFileUtils;
 import net.gsantner.opoc.wrapper.GsCallback;
 
@@ -102,7 +102,6 @@ public class AttachLinkOrFileDialog {
         final Button buttonPictureGallery = view.findViewById(R.id.ui__select_path_dialog__gallery_picture);
         final Button buttonPictureCamera = view.findViewById(R.id.ui__select_path_dialog__camera_picture);
         final Button buttonPictureEdit = view.findViewById(R.id.ui__select_path_dialog__edit_picture);
-        final Button buttonAudioRecord = view.findViewById(R.id.ui__select_path_dialog__record_audio);
 
         builder.setCancelable(true);
         builder.setNegativeButton(android.R.string.cancel, (di, b) -> di.dismiss());
@@ -143,7 +142,6 @@ public class AttachLinkOrFileDialog {
             okType = InsertType.IMAGE_DIALOG;
         } else if (action == AUDIO_ACTION) {
             dialog.setTitle(R.string.audio);
-            buttonAudioRecord.setVisibility(View.VISIBLE);
             browseType = InsertType.AUDIO_BROWSE;
             okType = InsertType.AUDIO_DIALOG;
         } else {
@@ -159,7 +157,6 @@ public class AttachLinkOrFileDialog {
         buttonSearch.setOnClickListener(v -> _insertItem.callback(InsertType.LINK_SEARCH));
         buttonPictureCamera.setOnClickListener(b -> _insertItem.callback(InsertType.IMAGE_CAMERA));
         buttonPictureGallery.setOnClickListener(v -> _insertItem.callback(InsertType.IMAGE_GALLERY));
-        buttonAudioRecord.setOnClickListener(v -> _insertItem.callback(InsertType.AUDIO_RECORDING));
         buttonPictureEdit.setOnClickListener(v -> _insertItem.callback(InsertType.IMAGE_EDIT));
 
         dialog.show();
@@ -272,9 +269,9 @@ public class AttachLinkOrFileDialog {
     private static String setupFileAttachment(
             final int textFormatId,
             final File attachment,
-            final File document
+            final File document,
+            final AppSettings as
     ) {
-        final AppSettings as = ApplicationObject.settings();
         final File notebookDir = as.getNotebookDirectory();
 
         String path = "";
@@ -296,17 +293,16 @@ public class AttachLinkOrFileDialog {
             }
         }
 
+        // Remove trailing slashes if any
+        path = path.replaceAll("/+$", "");
+
         return path;
     }
 
-    public static String makeAttachmentLink(
-            final int textFormatId,
-            final String title,
-            final File attachment,
-            final File document
-    ) {
-        final String path = setupFileAttachment(textFormatId, attachment, document);
-        return formatLink(title, path, textFormatId);
+    public static String makeAttachmentLink(final int textFormatId, final String title, final File attachment, final File document) {
+        final String path = setupFileAttachment(textFormatId, attachment, document, AppSettings.get(null));
+        final boolean isImage = GsFileUtils.getMimeType(attachment).contains("image");
+        return formatLink(title, path, textFormatId, isImage ? InsertType.IMAGE_DIALOG : InsertType.LINK_DIALOG);
     }
 
     private static void fetchAndInsertItem(
@@ -325,7 +321,7 @@ public class AttachLinkOrFileDialog {
             sel = TextViewUtils.getSelection(edit);
         }
 
-        final AppSettings _appSettings = ApplicationObject.settings();
+        final AppSettings as = AppSettings.get(activity);
 
         // Title, path to be written when the user hits accept
         final GsCallback.a2<String, String> insertLink = (title, path) -> {
@@ -375,7 +371,7 @@ public class AttachLinkOrFileDialog {
                 title = GsFileUtils.getFilenameWithoutExtension(attachment);
             }
 
-            final String localPath = setupFileAttachment(textFormatId, attachment, currentFile);
+            final String localPath = setupFileAttachment(textFormatId, attachment, currentFile, as);
 
             insertLink.callback(title, localPath);
         };
@@ -397,8 +393,8 @@ public class AttachLinkOrFileDialog {
                     nameEdit.setText("");
                 }
 
-                final File notebookDir = _appSettings.getNotebookDirectory();
-                final boolean shouldDynamicallyDetermineRoot = _appSettings.isWikitextDynamicNotebookRootEnabled();
+                final File notebookDir = as.getNotebookDirectory();
+                final boolean shouldDynamicallyDetermineRoot = as.isWikitextDynamicNotebookRootEnabled();
                 pathEdit.setText(WikitextLinkResolver.resolveSystemFilePath(file, notebookDir, currentFile, shouldDynamicallyDetermineRoot));
 
                 if (GsTextUtils.isNullOrEmpty(nameEdit.getText())) {
@@ -453,6 +449,8 @@ public class AttachLinkOrFileDialog {
             case AUDIO_BROWSE: {
                 if (activity instanceof AppCompatActivity && nameEdit != null && pathEdit != null) {
                     final GsFileBrowserOptions.SelectionListener fsListener = new GsFileBrowserOptions.SelectionListenerAdapter() {
+                        GsFileBrowserOptions.Options _dopt = null;
+
                         @Override
                         public void onFsViewerSelected(final String request, final File file, final Integer lineNumber) {
                             setFields.callback(file);
@@ -462,6 +460,21 @@ public class AttachLinkOrFileDialog {
                         public void onFsViewerConfig(GsFileBrowserOptions.Options dopt) {
                             dopt.startFolder = currentFile.getParentFile();
                             dopt.rootFolder = GsFileBrowserListAdapter.VIRTUAL_STORAGE_ROOT;
+
+                            if (action == InsertType.LINK_BROWSE) {
+                                dopt.neutralButtonText = R.string.folder;
+                            }
+
+                            _dopt = dopt;
+                        }
+
+                        @Override
+                        public void onFsViewerNeutralButtonPressed(File currentFolder) {
+                            setFields.callback(currentFolder);
+                            if (_dopt != null) {
+                                _dopt.dialogInterface.dismiss();
+                                ;
+                            }
                         }
                     };
 

@@ -58,7 +58,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
@@ -91,7 +90,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.WebView;
 import android.widget.ImageView;
@@ -123,6 +121,8 @@ import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.os.ConfigurationCompat;
 import androidx.core.text.TextUtilsCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
@@ -476,7 +476,7 @@ public class GsContextUtils {
      */
     public boolean isAppInstalled(final Context context, String appId) {
         try {
-            final PackageManager pm = context.getApplicationContext().getPackageManager();
+            final PackageManager pm = context.getPackageManager();
             pm.getPackageInfo(appId, PackageManager.GET_ACTIVITIES);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
@@ -2553,18 +2553,32 @@ public class GsContextUtils {
     }
 
     public <T extends GsContextUtils> T showSoftKeyboard(final Activity activity, final boolean show, final View... view) {
-        if (activity != null) {
-            final InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-            final View focus = (view != null && view.length > 0) ? view[0] : activity.getCurrentFocus();
-            final IBinder token = focus != null ? focus.getWindowToken() : null;
-            if (imm != null && focus != null) {
-                if (show) {
-                    imm.showSoftInput(focus, InputMethodManager.SHOW_IMPLICIT);
-                } else if (token != null) {
-                    imm.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);
-                }
+        if (activity == null) {
+            return thisp();
+        }
+
+        final Window win = activity.getWindow();
+        if (win == null) {
+            return thisp();
+        }
+
+        View focus = (view != null && view.length > 0) ? view[0] : activity.getCurrentFocus();
+
+        if (focus == null) {
+            focus = win.getDecorView();
+        }
+
+        if (focus != null) {
+            final WindowInsetsControllerCompat ctrl = new WindowInsetsControllerCompat(win, focus);
+            if (show) {
+                focus.requestFocus();
+                ctrl.show(WindowInsetsCompat.Type.ime());
+            } else {
+                focus.clearFocus();
+                ctrl.hide(WindowInsetsCompat.Type.ime());
             }
         }
+
         return thisp();
     }
 
